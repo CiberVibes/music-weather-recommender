@@ -1,4 +1,4 @@
-package es.ulpgc.dacd.lastfm.client;
+package es.ulpgc.dacd.lastfm.feeder;
 
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
@@ -14,21 +14,35 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 
-public class LastFmClient {
+public class LastFmApiFeeder implements LastFmFeeder {
 
     private static final String BASE_URL = "http://ws.audioscrobbler.com/2.0/";
 
     private final String apiKey;
+    private final String country;
     private final OkHttpClient httpClient;
     private final Gson gson;
 
-    public LastFmClient(String apiKey) {
+    public LastFmApiFeeder(String apiKey, String country) {
         this.apiKey = apiKey;
+        this.country = country;
         this.httpClient = new OkHttpClient();
         this.gson = new Gson();
     }
 
-    public List<Track> getTopTracks(String country) throws IOException {
+    @Override
+    public List<Track> feed() {
+        try {
+            List<Track> tracks = getTopTracks(country);
+            return tracks.stream()
+                    .map(t -> new Track(t.getName(), t.getArtist(), t.getMbid(), t.getUrl(), t.getRank(), t.getCapturedAt(), getTopTagsForTrack(t.getArtist(), t.getName())))
+                    .toList();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private List<Track> getTopTracks(String country) throws IOException {
         String url = BASE_URL + "?method=geo.gettoptracks"
                 + "&country=" + encode(country)
                 + "&api_key=" + apiKey
@@ -37,23 +51,18 @@ public class LastFmClient {
         return parseTopTracks(json);
     }
 
-    public List<Tag> getTopTagsForTrack(String artist, String trackName) throws IOException {
-        String url = BASE_URL + "?method=track.gettoptags"
-                + "&artist=" + encode(artist)
-                + "&track=" + encode(trackName)
-                + "&api_key=" + apiKey
-                + "&format=json";
-        String json = get(url);
-        return parseTopTags(json);
-    }
-
-    public List<Track> getTopTracksByTag(String tag) throws IOException {
-        String url = BASE_URL + "?method=tag.gettoptracks"
-                + "&tag=" + encode(tag)
-                + "&api_key=" + apiKey
-                + "&format=json";
-        String json = get(url);
-        return parseTopTracks(json);
+    private List<Tag> getTopTagsForTrack(String artist, String trackName) {
+        try {
+            String url = BASE_URL + "?method=track.gettoptags"
+                    + "&artist=" + encode(artist)
+                    + "&track=" + encode(trackName)
+                    + "&api_key=" + apiKey
+                    + "&format=json";
+            String json = get(url);
+            return parseTopTags(json);
+        } catch (IOException e) {
+            return List.of();
+        }
     }
 
     private String get(String url) throws IOException {
@@ -68,7 +77,7 @@ public class LastFmClient {
         TopTracksResponse response = gson.fromJson(json, TopTracksResponse.class);
         Instant capturedAt = Instant.now();
         return response.tracks.track.stream()
-                .map(t -> new Track(t.name, t.artist.name, t.mbid, t.url, Integer.parseInt(t.attr.rank), capturedAt))
+                .map(t -> new Track(t.name, t.artist.name, t.mbid, t.url, Integer.parseInt(t.attr.rank), capturedAt, List.of()))
                 .toList();
     }
 
