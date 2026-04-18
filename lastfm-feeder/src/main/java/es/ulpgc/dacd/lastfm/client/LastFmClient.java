@@ -16,51 +16,71 @@ import java.util.List;
 
 public class LastFmClient {
 
+    private static final String BASE_URL = "http://ws.audioscrobbler.com/2.0/";
+
     private final String apiKey;
+    private final OkHttpClient httpClient;
+    private final Gson gson;
 
     public LastFmClient(String apiKey) {
         this.apiKey = apiKey;
+        this.httpClient = new OkHttpClient();
+        this.gson = new Gson();
     }
 
     public List<Track> getTopTracks(String country) throws IOException {
-        OkHttpClient httpClient = new OkHttpClient();
-        Gson gson = new Gson();
-        String url = "http://ws.audioscrobbler.com/2.0/?method=geo.gettoptracks&country=" + URLEncoder.encode(country, StandardCharsets.UTF_8) + "&api_key=" + apiKey + "&format=json";
+        String url = BASE_URL + "?method=geo.gettoptracks"
+                + "&country=" + encode(country)
+                + "&api_key=" + apiKey
+                + "&format=json";
+        String json = get(url);
+        return parseTopTracks(json);
+    }
+
+    public List<Tag> getTopTagsForTrack(String artist, String trackName) throws IOException {
+        String url = BASE_URL + "?method=track.gettoptags"
+                + "&artist=" + encode(artist)
+                + "&track=" + encode(trackName)
+                + "&api_key=" + apiKey
+                + "&format=json";
+        String json = get(url);
+        return parseTopTags(json);
+    }
+
+    public List<Track> getTopTracksByTag(String tag) throws IOException {
+        String url = BASE_URL + "?method=tag.gettoptracks"
+                + "&tag=" + encode(tag)
+                + "&api_key=" + apiKey
+                + "&format=json";
+        String json = get(url);
+        return parseTopTracks(json);
+    }
+
+    private String get(String url) throws IOException {
         Request request = new Request.Builder().url(url).build();
-        Response response = httpClient.newCall(request).execute();
-        String json = response.body().string();
-        TopTracksResponse r = gson.fromJson(json, TopTracksResponse.class);
+        try (Response response = httpClient.newCall(request).execute()) {
+            if (!response.isSuccessful()) throw new IOException("Unexpected response: " + response);
+            return response.body().string();
+        }
+    }
+
+    private List<Track> parseTopTracks(String json) {
+        TopTracksResponse response = gson.fromJson(json, TopTracksResponse.class);
         Instant capturedAt = Instant.now();
-        return r.tracks.track.stream()
+        return response.tracks.track.stream()
                 .map(t -> new Track(t.name, t.artist.name, t.mbid, t.url, Integer.parseInt(t.attr.rank), capturedAt))
                 .toList();
     }
 
-    public List<Tag> getTopTagsForTrack(String artist, String trackName) throws IOException {
-        OkHttpClient httpClient = new OkHttpClient();
-        Gson gson = new Gson();
-        String url = "http://ws.audioscrobbler.com/2.0/?method=track.gettoptags&artist=" + URLEncoder.encode(artist, StandardCharsets.UTF_8) + "&track=" + URLEncoder.encode(trackName, StandardCharsets.UTF_8) + "&api_key=" + apiKey + "&format=json";
-        Request request = new Request.Builder().url(url).build();
-        Response response = httpClient.newCall(request).execute();
-        String json = response.body().string();
-        TopTagsResponse r = gson.fromJson(json, TopTagsResponse.class);
-        return r.toptags.tag.stream()
+    private List<Tag> parseTopTags(String json) {
+        TopTagsResponse response = gson.fromJson(json, TopTagsResponse.class);
+        return response.toptags.tag.stream()
                 .map(t -> new Tag(t.name, t.count))
                 .toList();
     }
 
-    public List<Track> getTopTracksByTag(String tag) throws IOException {
-        OkHttpClient httpClient = new OkHttpClient();
-        Gson gson = new Gson();
-        String url = "http://ws.audioscrobbler.com/2.0/?method=tag.gettoptracks&tag=" + URLEncoder.encode(tag, StandardCharsets.UTF_8) + "&api_key=" + apiKey + "&format=json";
-        Request request = new Request.Builder().url(url).build();
-        Response response = httpClient.newCall(request).execute();
-        String json = response.body().string();
-        TopTracksResponse r = gson.fromJson(json, TopTracksResponse.class);
-        Instant capturedAt = Instant.now();
-        return r.tracks.track.stream()
-                .map(t -> new Track(t.name, t.artist.name, t.mbid, t.url, Integer.parseInt(t.attr.rank), capturedAt))
-                .toList();
+    private String encode(String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 
     private static class TopTracksResponse {
