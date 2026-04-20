@@ -33,22 +33,24 @@ public class LastFmApiFeeder implements LastFmFeeder {
     @Override
     public List<Track> feed() {
         try {
-            List<Track> tracks = getTopTracks(country);
-            return tracks.stream()
-                    .map(t -> new Track(t.getName(), t.getArtist(), t.getMbid(), t.getUrl(), t.getRank(), t.getCapturedAt(), getTopTagsForTrack(t.getArtist(), t.getName())))
+            return getTopTracks(country).stream()
+                    .map(this::enrichWithTags)
                     .toList();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
+    private Track enrichWithTags(Track track) {
+        List<Tag> tags = getTopTagsForTrack(track.getArtist(), track.getName());
+        return new Track(track.getName(), track.getArtist(), track.getMbid(), track.getUrl(), track.getRank(), track.getCapturedAt(), tags);
+    }
+
     private List<Track> getTopTracks(String country) throws IOException {
         String url = BASE_URL + "?method=geo.gettoptracks"
                 + "&country=" + encode(country)
-                + "&api_key=" + apiKey
-                + "&format=json";
-        String json = get(url);
-        return parseTopTracks(json);
+                + commonParams();
+        return parseTopTracks(get(url));
     }
 
     private List<Tag> getTopTagsForTrack(String artist, String trackName) {
@@ -56,13 +58,15 @@ public class LastFmApiFeeder implements LastFmFeeder {
             String url = BASE_URL + "?method=track.gettoptags"
                     + "&artist=" + encode(artist)
                     + "&track=" + encode(trackName)
-                    + "&api_key=" + apiKey
-                    + "&format=json";
-            String json = get(url);
-            return parseTopTags(json);
+                    + commonParams();
+            return parseTopTags(get(url));
         } catch (IOException e) {
             return List.of();
         }
+    }
+
+    private String commonParams() {
+        return "&api_key=" + apiKey + "&format=json";
     }
 
     private String get(String url) throws IOException {

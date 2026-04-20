@@ -14,12 +14,20 @@ public class DatabaseTrackSerializer implements TrackSerializer {
 
     public DatabaseTrackSerializer(String dbPath) {
         this.dbPath = dbPath;
+        initializeDatabase();
+    }
+
+    private void initializeDatabase() {
+        try (Connection connection = connect()) {
+            createTablesIfNotExist(connection);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public void serialize(Track track) {
         try (Connection connection = connect()) {
-            createTablesIfNotExist(connection);
             insertTrack(connection, track);
             insertTags(connection, track);
         } catch (SQLException e) {
@@ -45,7 +53,9 @@ public class DatabaseTrackSerializer implements TrackSerializer {
                 + "rank INTEGER,"
                 + "captured_at TEXT NOT NULL"
                 + ")";
-        connection.createStatement().execute(sql);
+        try (var stmt = connection.createStatement()) {
+            stmt.execute(sql);
+        }
     }
 
     private void createTagsTable(Connection connection) throws SQLException {
@@ -55,7 +65,9 @@ public class DatabaseTrackSerializer implements TrackSerializer {
                 + "tag_name TEXT NOT NULL,"
                 + "tag_count INTEGER"
                 + ")";
-        connection.createStatement().execute(sql);
+        try (var stmt = connection.createStatement()) {
+            stmt.execute(sql);
+        }
     }
 
     private void insertTrack(Connection connection, Track track) throws SQLException {
