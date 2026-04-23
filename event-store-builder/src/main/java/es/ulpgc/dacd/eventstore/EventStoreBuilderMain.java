@@ -16,10 +16,10 @@ public class EventStoreBuilderMain {
         FileEventStore eventStore = new FileEventStore(eventStorePath);
 
         List<JmsSubscriber> subscribers = List.of(
-                new JmsSubscriber(brokerUrl, "Track", eventStore),
-                new JmsSubscriber(brokerUrl, "Weather", eventStore)
+                new JmsSubscriber("Track", eventStore),
+                new JmsSubscriber("Weather", eventStore)
         );
 
-        new Controller(subscribers).start();
+        new Controller(brokerUrl, subscribers).start();
     }
 }
