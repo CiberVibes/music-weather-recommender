@@ -12,6 +12,7 @@
 
     <modules>
         <module>lastfm-feeder</module>
+        <module>event-store-builder</module>
     </modules>
 
     <properties>
