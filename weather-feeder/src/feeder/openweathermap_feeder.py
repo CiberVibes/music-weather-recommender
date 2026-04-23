@@ -31,7 +31,7 @@ class OpenWeatherMapFeeder(WeatherFeeder):
             'units': 'metric'
         }
 
-        response = requests.get(self.BASE_URL, params=params)
+        response = requests.get(self.BASE_URL, params=params, timeout=10)
 
         if not response.ok:
             raise Exception(f"HTTP Error: {response.status_code} - {response.text}")
