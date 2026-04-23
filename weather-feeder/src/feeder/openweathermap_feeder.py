@@ -8,6 +8,8 @@ from src.model import Weather, Location
 
 class OpenWeatherMapFeeder(WeatherFeeder):
     BASE_URL = "https://api.openweathermap.org/data/2.5/weather"
+    UNITS = "metric"
+    TIMEOUT = 10
 
     def __init__(self, api_key: str, locations: List[Dict[str, float]]):
         self.api_key = api_key
@@ -24,14 +26,8 @@ class OpenWeatherMapFeeder(WeatherFeeder):
         return weathers
 
     def _fetch_weather(self, location: Dict[str, float]) -> Weather:
-        params = {
-            'lat': location['lat'],
-            'lon': location['lon'],
-            'appid': self.api_key,
-            'units': 'metric'
-        }
-
-        response = requests.get(self.BASE_URL, params=params, timeout=10)
+        params = self._build_params(location)
+        response = requests.get(self.BASE_URL, params=params, timeout=self.TIMEOUT)
 
         if not response.ok:
             raise Exception(f"HTTP Error: {response.status_code} - {response.text}")
@@ -39,17 +35,17 @@ class OpenWeatherMapFeeder(WeatherFeeder):
         data = response.json()
         return self._parse_weather(data)
 
+    def _build_params(self, location: Dict[str, float]) -> Dict[str, Any]:
+        return {
+            'lat': location['lat'],
+            'lon': location['lon'],
+            'appid': self.api_key,
+            'units': self.UNITS
+        }
+
     def _parse_weather(self, data: Dict[str, Any]) -> Weather:
-        captured_at = datetime.now()
-
-        location = Location(
-            name=data['name'],
-            lat=data['coord']['lat'],
-            lon=data['coord']['lon'],
-            country=data['sys']['country']
-        )
-
-        weather = Weather(
+        location = self._parse_location(data)
+        return Weather(
             location=location,
             temperature=data['main']['temp'],
             feels_like=data['main']['feels_like'],
@@ -63,7 +59,13 @@ class OpenWeatherMapFeeder(WeatherFeeder):
             wind_speed=data['wind']['speed'],
             rain=data.get('rain', {}).get('1h'),
             snow=data.get('snow', {}).get('1h'),
-            captured_at=captured_at
+            captured_at=datetime.now()
         )
 
-        return weather
+    def _parse_location(self, data: Dict[str, Any]) -> Location:
+        return Location(
+            name=data['name'],
+            lat=data['coord']['lat'],
+            lon=data['coord']['lon'],
+            country=data['sys']['country']
+        )
