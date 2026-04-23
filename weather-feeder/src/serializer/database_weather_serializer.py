@@ -9,47 +9,48 @@ class DatabaseWeatherSerializer(WeatherSerializer):
         self._create_table()
 
     def _create_table(self):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS weather (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                location_name TEXT NOT NULL,
-                latitude REAL NOT NULL,
-                longitude REAL NOT NULL,
-                country TEXT NOT NULL,
-                temperature REAL NOT NULL,
-                feels_like REAL NOT NULL,
-                temp_min REAL NOT NULL,
-                temp_max REAL NOT NULL,
-                pressure INTEGER NOT NULL,
-                humidity INTEGER NOT NULL,
-                weather_main TEXT NOT NULL,
-                weather_description TEXT NOT NULL,
-                clouds INTEGER NOT NULL,
-                wind_speed REAL NOT NULL,
-                rain REAL,
-                snow REAL,
-                captured_at TEXT NOT NULL
-            )
-        ''')
-
-        conn.commit()
-        conn.close()
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS weather (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    location_name TEXT NOT NULL,
+                    latitude REAL NOT NULL,
+                    longitude REAL NOT NULL,
+                    country TEXT NOT NULL,
+                    temperature REAL NOT NULL,
+                    feels_like REAL NOT NULL,
+                    temp_min REAL NOT NULL,
+                    temp_max REAL NOT NULL,
+                    pressure INTEGER NOT NULL,
+                    humidity INTEGER NOT NULL,
+                    weather_main TEXT NOT NULL,
+                    weather_description TEXT NOT NULL,
+                    clouds INTEGER NOT NULL,
+                    wind_speed REAL NOT NULL,
+                    rain REAL,
+                    snow REAL,
+                    captured_at TEXT NOT NULL
+                )
+            ''')
+            conn.commit()
 
     def serialize(self, weather: Weather) -> None:
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            data = self._prepare_data(weather)
+            cursor.execute('''
+                INSERT INTO weather (
+                    location_name, latitude, longitude, country,
+                    temperature, feels_like, temp_min, temp_max,
+                    pressure, humidity, weather_main, weather_description,
+                    clouds, wind_speed, rain, snow, captured_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', data)
+            conn.commit()
 
-        cursor.execute('''
-            INSERT INTO weather (
-                location_name, latitude, longitude, country,
-                temperature, feels_like, temp_min, temp_max,
-                pressure, humidity, weather_main, weather_description,
-                clouds, wind_speed, rain, snow, captured_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
+    def _prepare_data(self, weather: Weather):
+        return (
             weather.location.name,
             weather.location.lat,
             weather.location.lon,
@@ -67,7 +68,4 @@ class DatabaseWeatherSerializer(WeatherSerializer):
             weather.rain,
             weather.snow,
             weather.captured_at.isoformat()
-        ))
-
-        conn.commit()
-        conn.close()
+        )
