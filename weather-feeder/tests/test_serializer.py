@@ -1,6 +1,7 @@
 import unittest
 import os
 import sqlite3
+import time
 from datetime import datetime
 from src.serializer import DatabaseWeatherSerializer
 from src.model import Weather, Location
@@ -9,11 +10,16 @@ from src.model import Weather, Location
 class TestDatabaseWeatherSerializer(unittest.TestCase):
     def setUp(self):
         self.test_db = "test_weather.db"
+        if os.path.exists(self.test_db):
+            try:
+                os.remove(self.test_db)
+            except PermissionError:
+                time.sleep(0.1)
         self.serializer = DatabaseWeatherSerializer(self.test_db)
 
     def tearDown(self):
-        if os.path.exists(self.test_db):
-            os.remove(self.test_db)
+        del self.serializer
+        time.sleep(0.1)
 
     def test_table_creation(self):
         conn = sqlite3.connect(self.test_db)
