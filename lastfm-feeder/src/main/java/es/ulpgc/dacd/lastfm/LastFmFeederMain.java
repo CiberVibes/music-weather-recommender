@@ -2,7 +2,9 @@ package es.ulpgc.dacd.lastfm;
 
 import es.ulpgc.dacd.lastfm.controller.Controller;
 import es.ulpgc.dacd.lastfm.feeder.LastFmApiFeeder;
+import es.ulpgc.dacd.lastfm.publisher.GsonTrackEventSerializer;
 import es.ulpgc.dacd.lastfm.publisher.JmsTrackPublisher;
+import es.ulpgc.dacd.lastfm.publisher.TrackEventSerializer;
 
 import javax.jms.JMSException;
 
@@ -14,7 +16,8 @@ public class LastFmFeederMain {
         String brokerUrl = args[2];
 
         LastFmApiFeeder feeder = new LastFmApiFeeder(apiKey, country);
-        JmsTrackPublisher publisher = new JmsTrackPublisher(brokerUrl, "lastfm-feeder");
+        TrackEventSerializer eventSerializer = new GsonTrackEventSerializer("lastfm-feeder");
+        JmsTrackPublisher publisher = new JmsTrackPublisher(brokerUrl, eventSerializer);
         new Controller(feeder, publisher).start();
     }
 }

@@ -1,8 +1,6 @@
 package es.ulpgc.dacd.lastfm.publisher;
 
-import com.google.gson.Gson;
 import es.ulpgc.dacd.lastfm.model.Track;
-import es.ulpgc.dacd.lastfm.model.TrackEvent;
 import es.ulpgc.dacd.lastfm.serializer.TrackSerializer;
 import org.apache.activemq.ActiveMQConnectionFactory;
 
@@ -12,14 +10,12 @@ public class JmsTrackPublisher implements TrackSerializer {
 
     private static final String TOPIC = "Track";
 
-    private final String ss;
-    private final Gson gson;
+    private final TrackEventSerializer eventSerializer;
     private final Session session;
     private final MessageProducer producer;
 
-    public JmsTrackPublisher(String brokerUrl, String ss) throws JMSException {
-        this.ss = ss;
-        this.gson = new Gson();
+    public JmsTrackPublisher(String brokerUrl, TrackEventSerializer eventSerializer) throws JMSException {
+        this.eventSerializer = eventSerializer;
         ConnectionFactory factory = new ActiveMQConnectionFactory(brokerUrl);
         Connection connection = factory.createConnection();
         connection.start();
@@ -30,8 +26,7 @@ public class JmsTrackPublisher implements TrackSerializer {
     @Override
     public void serialize(Track track) {
         try {
-            TrackEvent event = new TrackEvent(ss, track);
-            String json = gson.toJson(event);
+            String json = eventSerializer.serialize(track);
             producer.send(session.createTextMessage(json));
         } catch (JMSException e) {
             throw new RuntimeException(e);
