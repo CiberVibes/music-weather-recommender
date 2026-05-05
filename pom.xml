@@ -13,6 +13,7 @@
     <modules>
         <module>lastfm-feeder</module>
         <module>event-store-builder</module>
+        <module>business-unit</module>
     </modules>
 
     <properties>
