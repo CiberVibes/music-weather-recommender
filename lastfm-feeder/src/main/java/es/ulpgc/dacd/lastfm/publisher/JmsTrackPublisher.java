@@ -29,7 +29,7 @@ public class JmsTrackPublisher implements TrackSerializer {
             String json = eventSerializer.serialize(track);
             producer.send(session.createTextMessage(json));
         } catch (JMSException e) {
-            throw new RuntimeException(e);
+            System.err.println("[lastfm-feeder] Failed to publish track '" + track.getName() + "': " + e.getMessage());
         }
     }
 }

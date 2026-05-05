@@ -23,23 +23,23 @@ public class FileEventStore {
     }
 
     public void save(String topic, String json) {
-        JsonObject event = JsonParser.parseString(json).getAsJsonObject();
-        String ss = event.get("ss").getAsString();
-        String ts = event.get("ts").getAsString();
-        String date = DATE_FORMAT.format(Instant.parse(ts));
-        Path filePath = Path.of(basePath, topic, ss, date + ".events");
-        writeEvent(filePath, json);
+        try {
+            JsonObject event = JsonParser.parseString(json).getAsJsonObject();
+            String ss = event.get("ss").getAsString();
+            String ts = event.get("ts").getAsString();
+            String date = DATE_FORMAT.format(Instant.parse(ts));
+            Path filePath = Path.of(basePath, topic, ss, date + ".events");
+            writeEvent(filePath, json);
+        } catch (Exception e) {
+            System.err.println("[event-store-builder] Failed to save event from topic '" + topic + "': " + e.getMessage());
+        }
     }
 
-    private void writeEvent(Path filePath, String json) {
-        try {
-            Files.createDirectories(filePath.getParent());
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath.toFile(), true))) {
-                writer.write(json);
-                writer.newLine();
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    private void writeEvent(Path filePath, String json) throws IOException {
+        Files.createDirectories(filePath.getParent());
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath.toFile(), true))) {
+            writer.write(json);
+            writer.newLine();
         }
     }
 }

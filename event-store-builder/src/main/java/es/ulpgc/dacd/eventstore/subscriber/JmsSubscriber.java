@@ -26,7 +26,7 @@ public class JmsSubscriber {
                 eventStore.save(topicName, textMessage.getText());
             }
         } catch (JMSException e) {
-            throw new RuntimeException(e);
+            System.err.println("[event-store-builder] Failed to process message from topic '" + topicName + "': " + e.getMessage());
         }
     }
 }

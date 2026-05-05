@@ -25,9 +25,13 @@ public class Controller {
     }
 
     private void run() {
-        List<Track> tracks = feeder.feed();
-        for (Track track : tracks) {
-            serializer.serialize(track);
+        try {
+            List<Track> tracks = feeder.feed();
+            for (Track track : tracks) {
+                serializer.serialize(track);
+            }
+        } catch (Exception e) {
+            System.err.println("[lastfm-feeder] Error during execution: " + e.getMessage());
         }
     }
 }
