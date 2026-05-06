@@ -4,8 +4,10 @@ import es.ulpgc.dacd.business.controller.Controller;
 import es.ulpgc.dacd.business.datamart.TrackDatamart;
 import es.ulpgc.dacd.business.handler.EventHandler;
 import es.ulpgc.dacd.business.handler.TrackEventHandler;
+import es.ulpgc.dacd.business.recommendation.TrackRecommender;
 import es.ulpgc.dacd.business.store.EventStoreReader;
 import es.ulpgc.dacd.business.subscriber.JmsSubscriber;
+import es.ulpgc.dacd.business.ui.Cli;
 
 import javax.jms.JMSException;
 import java.util.List;
@@ -31,5 +33,7 @@ public class BusinessUnitMain {
 
         EventStoreReader eventStoreReader = new EventStoreReader(eventStorePath);
         new Controller(brokerUrl, subscribers, eventStoreReader, historicalHandlers).start();
+
+        new Cli(new TrackRecommender(datamart)).start();
     }
 }

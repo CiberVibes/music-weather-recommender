@@ -33,13 +33,18 @@ public class TrackEventHandler implements EventHandler {
         JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
         String name = obj.get("name").getAsString();
         String artist = obj.get("artist").getAsString();
-        String mbid = obj.get("mbid").getAsString();
-        String url = obj.get("url").getAsString();
+        String mbid = getString(obj, "mbid");
+        String url = getString(obj, "url");
         int rank = obj.get("rank").getAsInt();
         String ts = obj.get("ts").getAsString();
         String ss = obj.get("ss").getAsString();
         List<Tag> tags = parseTags(obj.getAsJsonArray("tags"));
         return new Track(name, artist, mbid, url, rank, ts, ss, tags);
+    }
+
+    private String getString(JsonObject obj, String key) {
+        var element = obj.get(key);
+        return (element != null && !element.isJsonNull()) ? element.getAsString() : null;
     }
 
     private List<Tag> parseTags(JsonArray tagsArray) {
