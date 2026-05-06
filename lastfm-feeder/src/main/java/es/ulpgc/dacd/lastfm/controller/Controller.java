@@ -2,7 +2,6 @@ package es.ulpgc.dacd.lastfm.controller;
 
 import es.ulpgc.dacd.lastfm.feeder.LastFmFeeder;
 import es.ulpgc.dacd.lastfm.model.Track;
-import es.ulpgc.dacd.lastfm.serializer.TrackSerializer;
 
 import java.util.List;
 import java.util.concurrent.Executors;

@@ -1,7 +1,6 @@
-package es.ulpgc.dacd.lastfm.publisher;
+package es.ulpgc.dacd.lastfm.controller;
 
 import es.ulpgc.dacd.lastfm.model.Track;
-import es.ulpgc.dacd.lastfm.serializer.TrackSerializer;
 import org.apache.activemq.ActiveMQConnectionFactory;
 
 import javax.jms.*;

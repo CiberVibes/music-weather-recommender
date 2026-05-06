@@ -1,10 +1,10 @@
 package es.ulpgc.dacd.lastfm;
 
 import es.ulpgc.dacd.lastfm.controller.Controller;
+import es.ulpgc.dacd.lastfm.controller.GsonTrackEventSerializer;
+import es.ulpgc.dacd.lastfm.controller.JmsTrackPublisher;
+import es.ulpgc.dacd.lastfm.controller.TrackEventSerializer;
 import es.ulpgc.dacd.lastfm.feeder.LastFmApiFeeder;
-import es.ulpgc.dacd.lastfm.publisher.GsonTrackEventSerializer;
-import es.ulpgc.dacd.lastfm.publisher.JmsTrackPublisher;
-import es.ulpgc.dacd.lastfm.publisher.TrackEventSerializer;
 
 import javax.jms.JMSException;
 

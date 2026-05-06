@@ -1,4 +1,4 @@
-package es.ulpgc.dacd.lastfm.publisher;
+package es.ulpgc.dacd.lastfm.controller;
 
 import es.ulpgc.dacd.lastfm.model.Track;
 
