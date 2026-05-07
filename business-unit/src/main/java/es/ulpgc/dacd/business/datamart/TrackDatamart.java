@@ -73,7 +73,7 @@ public class TrackDatamart {
                     rank = excluded.rank,
                     ts = excluded.ts
                 """;
-        try (PreparedStatement stmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, track.getName());
             stmt.setString(2, track.getArtist());
             stmt.setString(3, track.getMbid());
@@ -82,8 +82,6 @@ public class TrackDatamart {
             stmt.setString(6, track.getTs());
             stmt.setString(7, track.getSs());
             stmt.executeUpdate();
-            ResultSet keys = stmt.getGeneratedKeys();
-            if (keys.next()) return keys.getLong(1);
         }
         return getTrackId(connection, track.getName(), track.getArtist());
     }
