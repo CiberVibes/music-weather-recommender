@@ -144,6 +144,41 @@ El datamart contiene actualmente **460 canciones** con **3070 etiquetas** de gé
 
 ---
 
+## Archivos de configuración
+
+| Fichero | Módulo | Descripción |
+|---|---|---|
+| `pom.xml` (raíz) | todos | POM multi-módulo Maven; declara los submódulos y la versión de Java (21) |
+| `lastfm-feeder/pom.xml` | lastfm-feeder | Dependencias: Gson, ActiveMQ client |
+| `event-store-builder/pom.xml` | event-store-builder | Dependencias: Gson, ActiveMQ client |
+| `business-unit/pom.xml` | business-unit | Dependencias: Gson, ActiveMQ client, SQLite JDBC |
+| `.env` | todos | Variables de entorno: claves de API, rutas, URL del broker (no commiteado) |
+| `.env.example` | todos | Plantilla pública del fichero `.env` |
+| `weather-feeder/locations.json` | weather-feeder | Lista de ciudades (nombre + coordenadas) a monitorizar |
+
+### `.env.example`
+
+```env
+LASTFM_API_KEY=your_lastfm_api_key_here
+LASTFM_COUNTRY=spain
+BROKER_URL=tcp://localhost:61616
+EVENTSTORE_PATH=./eventstore
+DATAMART_PATH=./datamart.db
+OPENWEATHER_API_KEY=your_openweathermap_api_key_here
+WEATHER_DB_PATH=./weather.db
+```
+
+### `weather-feeder/locations.json`
+
+```json
+[
+  { "name": "Las Palmas de Gran Canaria", "lat": 28.1, "lon": -15.4 },
+  { "name": "Santa Cruz de Tenerife",     "lat": 28.5, "lon": -16.3 }
+]
+```
+
+---
+
 ## Requisitos previos
 
 | Herramienta | Versión mínima |
