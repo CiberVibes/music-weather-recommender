@@ -25,11 +25,23 @@ public class JmsSubscriber {
 
     private void onMessage(Message message) {
         try {
-            if (message instanceof TextMessage textMessage) {
-                eventStore.save(topicName, textMessage.getText());
-            }
+            String text = extractText(message);
+            if (text != null) eventStore.save(topicName, text);
         } catch (JMSException e) {
             logger.severe("Failed to process message from topic '" + topicName + "': " + e.getMessage());
         }
+    }
+
+    private String extractText(Message message) throws JMSException {
+        if (message instanceof TextMessage textMessage) {
+            return textMessage.getText();
+        }
+        if (message instanceof BytesMessage bytesMessage) {
+            byte[] bytes = new byte[(int) bytesMessage.getBodyLength()];
+            bytesMessage.readBytes(bytes);
+            return new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+        }
+        logger.warning("Unexpected message type: " + message.getClass().getName());
+        return null;
     }
 }
