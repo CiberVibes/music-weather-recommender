@@ -3,8 +3,11 @@ package es.ulpgc.dacd.business.subscriber;
 import es.ulpgc.dacd.business.handler.EventHandler;
 
 import javax.jms.*;
+import java.util.logging.Logger;
 
 public class JmsSubscriber {
+
+    private static final Logger logger = Logger.getLogger(JmsSubscriber.class.getName());
 
     private final String topicName;
     private final EventHandler handler;
@@ -26,7 +29,7 @@ public class JmsSubscriber {
                 handler.handle(textMessage.getText());
             }
         } catch (JMSException e) {
-            System.err.println("[business-unit] Failed to process message from topic '" + topicName + "': " + e.getMessage());
+            logger.severe("Failed to process message from topic '" + topicName + "': " + e.getMessage());
         }
     }
 }

@@ -7,8 +7,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.logging.Logger;
 
 public class EventStoreReader {
+
+    private static final Logger logger = Logger.getLogger(EventStoreReader.class.getName());
 
     private final String eventStorePath;
 
@@ -25,7 +28,7 @@ public class EventStoreReader {
                     .sorted()
                     .forEach(file -> loadFile(file, handler));
         } catch (IOException e) {
-            System.err.println("[business-unit] Failed to read event store: " + e.getMessage());
+            logger.severe("Failed to read event store: " + e.getMessage());
         }
     }
 
@@ -36,7 +39,7 @@ public class EventStoreReader {
                 if (!line.isBlank()) handler.handle(line);
             }
         } catch (IOException e) {
-            System.err.println("[business-unit] Failed to read file " + file + ": " + e.getMessage());
+            logger.severe("Failed to read file " + file + ": " + e.getMessage());
         }
     }
 }

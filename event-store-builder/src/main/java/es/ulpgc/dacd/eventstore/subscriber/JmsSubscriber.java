@@ -3,8 +3,11 @@ package es.ulpgc.dacd.eventstore.subscriber;
 import es.ulpgc.dacd.eventstore.store.FileEventStore;
 
 import javax.jms.*;
+import java.util.logging.Logger;
 
 public class JmsSubscriber {
+
+    private static final Logger logger = Logger.getLogger(JmsSubscriber.class.getName());
 
     private final String topicName;
     private final FileEventStore eventStore;
@@ -26,7 +29,7 @@ public class JmsSubscriber {
                 eventStore.save(topicName, textMessage.getText());
             }
         } catch (JMSException e) {
-            System.err.println("[event-store-builder] Failed to process message from topic '" + topicName + "': " + e.getMessage());
+            logger.severe("Failed to process message from topic '" + topicName + "': " + e.getMessage());
         }
     }
 }

@@ -10,8 +10,11 @@ import es.ulpgc.dacd.business.model.Track;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class TrackEventHandler implements EventHandler {
+
+    private static final Logger logger = Logger.getLogger(TrackEventHandler.class.getName());
 
     private final TrackDatamart datamart;
 
@@ -25,7 +28,7 @@ public class TrackEventHandler implements EventHandler {
             Track track = parse(json);
             datamart.save(track);
         } catch (Exception e) {
-            System.err.println("[business-unit] Failed to handle track event: " + e.getMessage());
+            logger.severe("Failed to handle track event: " + e.getMessage());
         }
     }
 

@@ -7,8 +7,11 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
 public class Controller {
+
+    private static final Logger logger = Logger.getLogger(Controller.class.getName());
 
     private final LastFmFeeder feeder;
     private final TrackSerializer serializer;
@@ -30,7 +33,7 @@ public class Controller {
                 serializer.serialize(track);
             }
         } catch (Exception e) {
-            System.err.println("[lastfm-feeder] Error during execution: " + e.getMessage());
+            logger.severe("Error during execution: " + e.getMessage());
         }
     }
 }

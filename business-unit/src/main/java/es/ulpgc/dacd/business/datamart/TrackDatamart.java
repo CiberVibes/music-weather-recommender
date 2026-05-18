@@ -6,8 +6,11 @@ import es.ulpgc.dacd.business.model.Track;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class TrackDatamart {
+
+    private static final Logger logger = Logger.getLogger(TrackDatamart.class.getName());
 
     private final String dbPath;
 
@@ -61,7 +64,7 @@ public class TrackDatamart {
             long trackId = upsertTrack(connection, track);
             replaceTrackTags(connection, trackId, track.getTags());
         } catch (SQLException e) {
-            System.err.println("[business-unit] Failed to save track '" + track.getName() + "': " + e.getMessage());
+            logger.severe("Failed to save track '" + track.getName() + "': " + e.getMessage());
         }
     }
 
@@ -136,7 +139,7 @@ public class TrackDatamart {
                 ));
             }
         } catch (SQLException e) {
-            System.err.println("[business-unit] Failed to query tracks by tag: " + e.getMessage());
+            logger.severe("Failed to query tracks by tag: " + e.getMessage());
         }
         return result;
     }

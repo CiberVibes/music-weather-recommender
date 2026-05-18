@@ -4,6 +4,8 @@ import es.ulpgc.dacd.business.controller.Controller;
 import es.ulpgc.dacd.business.datamart.TrackDatamart;
 import es.ulpgc.dacd.business.handler.EventHandler;
 import es.ulpgc.dacd.business.handler.TrackEventHandler;
+import es.ulpgc.dacd.business.handler.WeatherEventHandler;
+import es.ulpgc.dacd.business.handler.WeatherState;
 import es.ulpgc.dacd.business.recommendation.TrackRecommender;
 import es.ulpgc.dacd.business.store.EventStoreReader;
 import es.ulpgc.dacd.business.subscriber.JmsSubscriber;
@@ -23,17 +25,22 @@ public class BusinessUnitMain {
         TrackDatamart datamart = new TrackDatamart(datamartPath);
         TrackEventHandler trackHandler = new TrackEventHandler(datamart);
 
+        WeatherState weatherState = new WeatherState();
+        WeatherEventHandler weatherHandler = new WeatherEventHandler(weatherState);
+
         List<JmsSubscriber> subscribers = List.of(
-                new JmsSubscriber("Track", trackHandler)
+                new JmsSubscriber("Track", trackHandler),
+                new JmsSubscriber("Weather", weatherHandler)
         );
 
         Map<String, EventHandler> historicalHandlers = Map.of(
-                "Track", trackHandler
+                "Track", trackHandler,
+                "Weather", weatherHandler
         );
 
         EventStoreReader eventStoreReader = new EventStoreReader(eventStorePath);
         new Controller(brokerUrl, subscribers, eventStoreReader, historicalHandlers).start();
 
-        new Cli(new TrackRecommender(datamart)).start();
+        new Cli(new TrackRecommender(datamart), weatherState).start();
     }
 }

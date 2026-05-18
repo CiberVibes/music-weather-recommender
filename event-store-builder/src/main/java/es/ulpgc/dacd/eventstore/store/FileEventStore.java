@@ -11,8 +11,11 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.logging.Logger;
 
 public class FileEventStore {
+
+    private static final Logger logger = Logger.getLogger(FileEventStore.class.getName());
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd").withZone(ZoneOffset.UTC);
 
@@ -31,7 +34,7 @@ public class FileEventStore {
             Path filePath = Path.of(basePath, topic, ss, date + ".events");
             writeEvent(filePath, json);
         } catch (Exception e) {
-            System.err.println("[event-store-builder] Failed to save event from topic '" + topic + "': " + e.getMessage());
+            logger.severe("Failed to save event from topic '" + topic + "': " + e.getMessage());
         }
     }
 
