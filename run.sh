@@ -14,6 +14,7 @@ source "$ENV_FILE"
 BROKER_URL=${BROKER_URL:-tcp://localhost:61616}
 EVENTSTORE_PATH=${EVENTSTORE_PATH:-$SCRIPT_DIR/eventstore}
 DATAMART_PATH=${DATAMART_PATH:-$SCRIPT_DIR/datamart.db}
+WEATHER_DB_PATH=${WEATHER_DB_PATH:-$SCRIPT_DIR/weather.db}
 
 if command -v mvn &>/dev/null; then
   MVN=mvn
@@ -31,6 +32,7 @@ echo "Build complete."
 pkill -f "event-store-builder.*jar" 2>/dev/null || true
 pkill -f "lastfm-feeder.*jar" 2>/dev/null || true
 pkill -f "business-unit.*jar" 2>/dev/null || true
+pkill -f "weather-feeder.*main.py" 2>/dev/null || true
 sleep 1
 
 echo "Starting event-store-builder..."
@@ -43,10 +45,19 @@ java -jar "$SCRIPT_DIR/lastfm-feeder/target/lastfm-feeder-1.0-SNAPSHOT.jar" \
   "$LASTFM_API_KEY" "$LASTFM_COUNTRY" "$BROKER_URL" &
 FEEDER_PID=$!
 
-trap "echo 'Stopping...'; kill $ESB_PID $FEEDER_PID 2>/dev/null; exit 0" INT TERM
+if [ -n "$OPENWEATHER_API_KEY" ] && command -v python3 &>/dev/null; then
+  echo "Starting weather-feeder..."
+  (cd "$SCRIPT_DIR/weather-feeder" && PYTHONPATH="$SCRIPT_DIR/weather-feeder" python3 src/main.py "$OPENWEATHER_API_KEY" "$WEATHER_DB_PATH" 1) &
+  WEATHER_PID=$!
+else
+  echo "Warning: weather-feeder skipped (OPENWEATHER_API_KEY not set or python3 not found)."
+  WEATHER_PID=""
+fi
+
+trap "echo 'Stopping...'; kill $ESB_PID $FEEDER_PID ${WEATHER_PID:-} 2>/dev/null; exit 0" INT TERM
 
 echo "Starting business-unit..."
 java -jar "$SCRIPT_DIR/business-unit/target/business-unit-1.0-SNAPSHOT.jar" \
   "$BROKER_URL" "$EVENTSTORE_PATH" "$DATAMART_PATH"
 
-kill $ESB_PID $FEEDER_PID 2>/dev/null
+kill $ESB_PID $FEEDER_PID ${WEATHER_PID:-} 2>/dev/null

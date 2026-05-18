@@ -1,5 +1,5 @@
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Dict, Any
 from urllib.parse import urlencode
 from src.feeder.weather_feeder import WeatherFeeder
@@ -59,7 +59,7 @@ class OpenWeatherMapFeeder(WeatherFeeder):
             wind_speed=data['wind']['speed'],
             rain=data.get('rain', {}).get('1h'),
             snow=data.get('snow', {}).get('1h'),
-            captured_at=datetime.now()
+            captured_at=datetime.now(timezone.utc)
         )
 
     def _parse_location(self, data: Dict[str, Any]) -> Location:
