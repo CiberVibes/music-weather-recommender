@@ -3,7 +3,11 @@ package es.ulpgc.dacd.business.handler;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import java.util.logging.Logger;
+
 public class WeatherEventHandler implements EventHandler {
+
+    private static final Logger logger = Logger.getLogger(WeatherEventHandler.class.getName());
 
     private final WeatherState weatherState;
 
@@ -19,7 +23,7 @@ public class WeatherEventHandler implements EventHandler {
             String weatherMain = obj.get("weather_main").getAsString();
             weatherState.update(location, weatherMain);
         } catch (Exception e) {
-            System.err.println("[business-unit] Failed to handle weather event: " + e.getMessage());
+            logger.severe("Failed to handle weather event: " + e.getMessage());
         }
     }
 }
