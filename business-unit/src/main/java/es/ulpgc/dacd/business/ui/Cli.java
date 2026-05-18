@@ -9,7 +9,7 @@ import java.util.Scanner;
 
 public class Cli {
 
-    private static final List<String> VALID_CONDITIONS =
+    private static final List<String> CONDITIONS =
             List.of("Clear", "Clouds", "Rain", "Drizzle", "Snow", "Thunderstorm", "Fog", "Mist");
 
     private final TrackRecommender recommender;
@@ -21,26 +21,47 @@ public class Cli {
     }
 
     public void start() {
-        System.out.println("=== Music Weather Recommender ===");
+        printHeader();
         while (true) {
-            String condition = askWeatherCondition();
-            if (condition.equalsIgnoreCase("exit")) break;
+            String condition = pickCondition();
+            if (condition == null) break;
             showRecommendations(condition);
+            waitForEnter();
         }
-        System.out.println("Goodbye!");
+        System.out.println("\nGoodbye!");
     }
 
-    private String askWeatherCondition() {
-        System.out.println("\nAvailable conditions: " + String.join(", ", VALID_CONDITIONS));
-        System.out.print("Enter weather condition (or 'exit' to quit): ");
-        return scanner.nextLine().trim();
+    private void printHeader() {
+        System.out.println("\n╔══════════════════════════════════════╗");
+        System.out.println("║     Music Weather Recommender        ║");
+        System.out.println("╚══════════════════════════════════════╝");
+    }
+
+    private String pickCondition() {
+        System.out.println("\nSelect a weather condition:");
+        for (int i = 0; i < CONDITIONS.size(); i++) {
+            String condition = CONDITIONS.get(i);
+            System.out.printf("  %d. %-14s→  %s%n", i + 1, condition, MoodMapper.moodName(condition));
+        }
+        System.out.println("  0. Exit");
+        System.out.print("\nOption: ");
+
+        String input = scanner.nextLine().trim();
+        try {
+            int choice = Integer.parseInt(input);
+            if (choice == 0) return null;
+            if (choice >= 1 && choice <= CONDITIONS.size()) return CONDITIONS.get(choice - 1);
+        } catch (NumberFormatException ignored) {}
+
+        System.out.println("Invalid option. Enter a number between 0 and " + CONDITIONS.size() + ".");
+        return pickCondition();
     }
 
     private void showRecommendations(String condition) {
         String mood = MoodMapper.moodName(condition);
         List<Track> tracks = recommender.recommend(condition);
 
-        System.out.println("\nWeather: " + condition + " → Mood: " + mood);
+        System.out.println("\nWeather: " + condition + "  →  Mood: " + mood);
         System.out.println("─".repeat(50));
 
         if (tracks.isEmpty()) {
@@ -48,10 +69,16 @@ public class Cli {
             return;
         }
 
-        System.out.println("Top recommended tracks:");
-        for (int i = 0; i < Math.min(10, tracks.size()); i++) {
+        int shown = Math.min(10, tracks.size());
+        for (int i = 0; i < shown; i++) {
             Track t = tracks.get(i);
             System.out.printf("  %2d. %s — %s%n", i + 1, t.getName(), t.getArtist());
         }
+        System.out.printf("%n  Showing %d track(s).%n", shown);
+    }
+
+    private void waitForEnter() {
+        System.out.print("\nPress Enter to go back...");
+        scanner.nextLine();
     }
 }
