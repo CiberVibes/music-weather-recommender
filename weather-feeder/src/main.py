@@ -4,6 +4,7 @@ import os
 from src.controller import Controller
 from src.feeder import OpenWeatherMapFeeder
 from src.serializer import DatabaseWeatherSerializer
+from src.publisher import ActiveMQWeatherPublisher
 
 
 def load_locations():
@@ -41,7 +42,9 @@ def main():
 
     feeder = OpenWeatherMapFeeder(api_key, locations)
     serializer = DatabaseWeatherSerializer(db_path)
-    controller = Controller(feeder, serializer)
+    publisher = ActiveMQWeatherPublisher()
+    publisher.connect()
+    controller = Controller(feeder, serializer, publisher)
 
     print(f"Starting Weather Feeder with interval of {interval_hours} hour(s)")
     controller.start(interval_hours)

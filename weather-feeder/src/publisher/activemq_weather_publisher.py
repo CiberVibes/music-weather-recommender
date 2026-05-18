@@ -20,6 +20,8 @@ class ActiveMQWeatherPublisher(WeatherPublisher):
             self.connect()
 
         weather_data = {
+            'ts': weather.captured_at.isoformat(),
+            'ss': 'OpenWeatherMap',
             'location': {
                 'name': weather.location.name,
                 'lat': weather.location.lat,
@@ -37,8 +39,7 @@ class ActiveMQWeatherPublisher(WeatherPublisher):
             'clouds': weather.clouds,
             'wind_speed': weather.wind_speed,
             'rain': weather.rain,
-            'snow': weather.snow,
-            'captured_at': weather.captured_at.isoformat()
+            'snow': weather.snow
         }
 
         message = json.dumps(weather_data)
