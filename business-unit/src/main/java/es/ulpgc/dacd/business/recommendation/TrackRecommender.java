@@ -3,7 +3,11 @@ package es.ulpgc.dacd.business.recommendation;
 import es.ulpgc.dacd.business.datamart.TrackDatamart;
 import es.ulpgc.dacd.business.model.Track;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class TrackRecommender {
 
@@ -14,10 +18,14 @@ public class TrackRecommender {
     }
 
     public List<Track> recommend(String weatherMain) {
+        Map<String, Track> seen = new LinkedHashMap<>();
         for (String tag : MoodMapper.tagsFor(weatherMain)) {
-            List<Track> tracks = datamart.findByTag(tag);
-            if (!tracks.isEmpty()) return tracks;
+            for (Track track : datamart.findByTag(tag)) {
+                seen.putIfAbsent(track.getName() + "|" + track.getArtist(), track);
+            }
         }
-        return List.of();
+        List<Track> result = new ArrayList<>(seen.values());
+        result.sort(Comparator.comparingInt(Track::getRank));
+        return result;
     }
 }
