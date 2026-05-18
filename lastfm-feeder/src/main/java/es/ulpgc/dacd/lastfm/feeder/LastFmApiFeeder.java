@@ -12,7 +12,10 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class LastFmApiFeeder implements LastFmFeeder {
 
@@ -33,7 +36,10 @@ public class LastFmApiFeeder implements LastFmFeeder {
     @Override
     public List<Track> feed() {
         try {
-            return getTopTracks(country).stream()
+            Map<String, Track> merged = new LinkedHashMap<>();
+            for (Track t : getCountryTopTracks(country)) merged.put(key(t), t);
+            for (Track t : getGlobalTopTracks()) merged.putIfAbsent(key(t), t);
+            return new ArrayList<>(merged.values()).stream()
                     .map(this::enrichWithTags)
                     .toList();
         } catch (IOException e) {
@@ -41,14 +47,26 @@ public class LastFmApiFeeder implements LastFmFeeder {
         }
     }
 
+    private String key(Track t) {
+        return t.getName().toLowerCase() + "|" + t.getArtist().toLowerCase();
+    }
+
     private Track enrichWithTags(Track track) {
         List<Tag> tags = getTopTagsForTrack(track.getArtist(), track.getName());
         return new Track(track.getName(), track.getArtist(), track.getMbid(), track.getUrl(), track.getRank(), track.getCapturedAt(), tags);
     }
 
-    private List<Track> getTopTracks(String country) throws IOException {
+    private List<Track> getCountryTopTracks(String country) throws IOException {
         String url = BASE_URL + "?method=geo.gettoptracks"
                 + "&country=" + encode(country)
+                + "&limit=300"
+                + commonParams();
+        return parseTopTracks(get(url));
+    }
+
+    private List<Track> getGlobalTopTracks() throws IOException {
+        String url = BASE_URL + "?method=chart.gettoptracks"
+                + "&limit=300"
                 + commonParams();
         return parseTopTracks(get(url));
     }
@@ -80,9 +98,14 @@ public class LastFmApiFeeder implements LastFmFeeder {
     private List<Track> parseTopTracks(String json) {
         TopTracksResponse response = gson.fromJson(json, TopTracksResponse.class);
         Instant capturedAt = Instant.now();
-        return response.tracks.track.stream()
-                .map(t -> new Track(t.name, t.artist.name, t.mbid, t.url, Integer.parseInt(t.attr.rank), capturedAt, List.of()))
-                .toList();
+        var items = response.tracks.track;
+        List<Track> result = new ArrayList<>();
+        for (int i = 0; i < items.size(); i++) {
+            var t = items.get(i);
+            int rank = (t.attr != null && t.attr.rank != null) ? Integer.parseInt(t.attr.rank) : i + 1;
+            result.add(new Track(t.name, t.artist.name, t.mbid, t.url, rank, capturedAt, List.of()));
+        }
+        return result;
     }
 
     private List<Tag> parseTopTags(String json) {
