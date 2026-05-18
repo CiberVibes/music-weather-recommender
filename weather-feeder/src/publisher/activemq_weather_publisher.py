@@ -1,8 +1,11 @@
-import stomp
 import json
+import logging
 import time
+import stomp
 from src.publisher import WeatherPublisher
 from src.model import Weather
+
+logger = logging.getLogger(__name__)
 
 MAX_RETRIES = 3
 RETRY_DELAY = 5
@@ -28,10 +31,10 @@ class ActiveMQWeatherPublisher(WeatherPublisher):
                 self.conn.send(body=message, destination=self.topic)
                 return
             except Exception as e:
-                print(f"[publisher] Attempt {attempt}/{MAX_RETRIES} failed: {e}")
+                logger.warning(f"Attempt {attempt}/{MAX_RETRIES} failed: {e}")
                 if attempt < MAX_RETRIES:
                     time.sleep(RETRY_DELAY)
-        print(f"[publisher] Could not publish event after {MAX_RETRIES} attempts")
+        logger.error(f"Could not publish event after {MAX_RETRIES} attempts")
 
     def disconnect(self):
         if self.conn and self.conn.is_connected():

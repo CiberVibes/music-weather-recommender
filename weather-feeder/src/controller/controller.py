@@ -1,8 +1,11 @@
+import logging
 import time
 from threading import Thread
 from src.feeder import WeatherFeeder
 from src.serializer import WeatherSerializer
 from src.publisher import WeatherPublisher
+
+logger = logging.getLogger(__name__)
 
 
 class Controller:
@@ -33,13 +36,13 @@ class Controller:
 
     def stop(self):
         self.running = False
-        print("Controller stopped")
+        logger.info("Controller stopped")
 
     def run(self):
         try:
-            print("Fetching weather data...")
+            logger.info("Fetching weather data...")
             weathers = self.feeder.feed()
-            print(f"Fetched {len(weathers)} weather records")
+            logger.info(f"Fetched {len(weathers)} weather records")
 
             count = 0
             for weather in weathers:
@@ -48,8 +51,8 @@ class Controller:
                     self.publisher.publish(weather)
                 count += 1
 
-            print(f"Saved {count} weather records to database")
+            logger.info(f"Saved {count} weather records to database")
             if self.publisher:
-                print(f"Published {count} weather records to ActiveMQ")
+                logger.info(f"Published {count} weather records to ActiveMQ")
         except Exception as e:
-            print(f"Error during processing: {e}")
+            logger.error(f"Error during processing: {e}")
