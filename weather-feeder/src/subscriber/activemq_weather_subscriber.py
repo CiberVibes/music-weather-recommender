@@ -1,7 +1,10 @@
 import json
+import logging
 import stomp
 from src.datamart import WeatherDatamart
 from src.subscriber.weather_subscriber import WeatherSubscriber
+
+logger = logging.getLogger(__name__)
 
 
 class WeatherListener(stomp.ConnectionListener):
@@ -13,9 +16,9 @@ class WeatherListener(stomp.ConnectionListener):
             event = json.loads(frame.body)
             self.datamart.save(event)
             location = event.get('location', {}).get('name', 'unknown')
-            print(f"[subscriber] Saved weather event for {location}")
+            logger.info(f"Saved weather event for {location}")
         except Exception as e:
-            print(f"[subscriber] Error processing message: {e}")
+            logger.error(f"Error processing message: {e}")
 
 
 class ActiveMQWeatherSubscriber(WeatherSubscriber):
@@ -36,7 +39,7 @@ class ActiveMQWeatherSubscriber(WeatherSubscriber):
             ack='auto',
             headers={'activemq.subscriptionName': 'weather-datamart-sub'}
         )
-        print(f"[subscriber] Subscribed to {self.topic}")
+        logger.info(f"Subscribed to {self.topic}")
 
     def stop(self) -> None:
         if self.conn and self.conn.is_connected():
