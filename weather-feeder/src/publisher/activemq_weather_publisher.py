@@ -1,11 +1,15 @@
 import stomp
 import json
+import time
 from src.publisher import WeatherPublisher
 from src.model import Weather
 
+MAX_RETRIES = 3
+RETRY_DELAY = 5
+
 
 class ActiveMQWeatherPublisher(WeatherPublisher):
-    def __init__(self, host='localhost', port=61613, topic='/topic/weather'):
+    def __init__(self, host='localhost', port=61613, topic='/topic/Weather'):
         self.host = host
         self.port = port
         self.topic = topic
@@ -16,10 +20,25 @@ class ActiveMQWeatherPublisher(WeatherPublisher):
         self.conn.connect('admin', 'admin', wait=True)
 
     def publish(self, weather: Weather) -> None:
-        if not self.conn or not self.conn.is_connected():
-            self.connect()
+        message = json.dumps(self._to_dict(weather))
+        for attempt in range(1, MAX_RETRIES + 1):
+            try:
+                if not self.conn or not self.conn.is_connected():
+                    self.connect()
+                self.conn.send(body=message, destination=self.topic)
+                return
+            except Exception as e:
+                print(f"[publisher] Attempt {attempt}/{MAX_RETRIES} failed: {e}")
+                if attempt < MAX_RETRIES:
+                    time.sleep(RETRY_DELAY)
+        print(f"[publisher] Could not publish event after {MAX_RETRIES} attempts")
 
-        weather_data = {
+    def disconnect(self):
+        if self.conn and self.conn.is_connected():
+            self.conn.disconnect()
+
+    def _to_dict(self, weather: Weather) -> dict:
+        return {
             'ts': weather.captured_at.isoformat(),
             'ss': 'OpenWeatherMap',
             'location': {
@@ -41,10 +60,3 @@ class ActiveMQWeatherPublisher(WeatherPublisher):
             'rain': weather.rain,
             'snow': weather.snow
         }
-
-        message = json.dumps(weather_data)
-        self.conn.send(body=message, destination=self.topic)
-
-    def disconnect(self):
-        if self.conn and self.conn.is_connected():
-            self.conn.disconnect()
