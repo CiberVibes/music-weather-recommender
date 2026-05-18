@@ -47,7 +47,11 @@ def main():
     controller = Controller(feeder, serializer, publisher)
 
     print(f"Starting Weather Feeder with interval of {interval_hours} hour(s)")
-    controller.start(interval_hours)
+    try:
+        controller.start(interval_hours)
+    finally:
+        publisher.disconnect()
+        print("Publisher disconnected")
 
 
 if __name__ == "__main__":
