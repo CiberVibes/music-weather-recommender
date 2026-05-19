@@ -1,4 +1,6 @@
-from src.datamart import WeatherDatamart
+from datamart import WeatherDatamart
+
+SEPARATOR_WIDTH = 60
 
 
 class Cli:
@@ -27,7 +29,7 @@ class Cli:
             print("No weather data available.")
             return
         print(f"\n{'Location':<20} {'Condition':<15} {'Temp (°C)':<12} {'Humidity'}")
-        print("─" * 60)
+        print("─" * SEPARATOR_WIDTH)
         for r in records:
             print(f"{r['location_name']:<20} {r['weather_main']:<15} {r['temperature']:<12} {r['humidity']}%")
 

@@ -1,8 +1,8 @@
 import json
 import logging
 import stomp
-from src.datamart import WeatherDatamart
-from src.subscriber.weather_subscriber import WeatherSubscriber
+from datamart import WeatherDatamart
+from subscriber.weather_subscriber import WeatherSubscriber
 
 logger = logging.getLogger(__name__)
 

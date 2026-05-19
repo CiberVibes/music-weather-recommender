@@ -38,29 +38,20 @@ class WeatherDatamart:
                  humidity, weather_main, weather_description, wind_speed, clouds, rain, snow)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
-                event.get('ts'),
-                event.get('ss'),
-                location.get('name'),
-                location.get('lat'),
-                location.get('lon'),
-                location.get('country'),
-                event.get('temperature'),
-                event.get('feels_like'),
-                event.get('humidity'),
-                event.get('weather_main'),
-                event.get('weather_description'),
-                event.get('wind_speed'),
-                event.get('clouds'),
-                event.get('rain'),
-                event.get('snow')
+                event.get('ts'), event.get('ss'),
+                location.get('name'), location.get('lat'),
+                location.get('lon'), location.get('country'),
+                event.get('temperature'), event.get('feels_like'),
+                event.get('humidity'), event.get('weather_main'),
+                event.get('weather_description'), event.get('wind_speed'),
+                event.get('clouds'), event.get('rain'), event.get('snow')
             ))
 
     def get_latest_by_location(self, location_name: str) -> dict | None:
         with self._connect() as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.execute("""
-                SELECT * FROM weather
-                WHERE location_name = ?
+                SELECT * FROM weather WHERE location_name = ?
                 ORDER BY ts DESC LIMIT 1
             """, (location_name,))
             row = cursor.fetchone()
@@ -73,8 +64,7 @@ class WeatherDatamart:
                 SELECT w.* FROM weather w
                 INNER JOIN (
                     SELECT location_name, MAX(ts) AS max_ts
-                    FROM weather
-                    GROUP BY location_name
+                    FROM weather GROUP BY location_name
                 ) latest ON w.location_name = latest.location_name
                          AND w.ts = latest.max_ts
                 ORDER BY w.location_name
