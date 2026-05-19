@@ -2,8 +2,8 @@ package es.ulpgc.dacd.business.ui;
 
 import es.ulpgc.dacd.business.handler.WeatherState;
 import es.ulpgc.dacd.business.model.Track;
-import es.ulpgc.dacd.business.recommendation.MoodMapper;
-import es.ulpgc.dacd.business.recommendation.TrackRecommender;
+import es.ulpgc.dacd.business.model.MoodMapping;
+import es.ulpgc.dacd.business.controller.TrackDatamart;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,15 +12,12 @@ import java.util.Scanner;
 
 public class Cli {
 
-    private static final List<String> CONDITIONS =
-            List.of("Clear", "Clouds", "Rain", "Drizzle", "Snow", "Thunderstorm", "Fog", "Mist");
-
-    private final TrackRecommender recommender;
+    private final TrackDatamart datamart;
     private final WeatherState weatherState;
     private final Scanner scanner;
 
-    public Cli(TrackRecommender recommender, WeatherState weatherState) {
-        this.recommender = recommender;
+    public Cli(TrackDatamart datamart, WeatherState weatherState) {
+        this.datamart = datamart;
         this.weatherState = weatherState;
         this.scanner = new Scanner(System.in);
     }
@@ -28,9 +25,9 @@ public class Cli {
     public void start() {
         printHeader();
         while (true) {
-            String condition = pickCondition();
-            if (condition == null) break;
-            showRecommendations(condition);
+            Map.Entry<String, String> selection = pickLocation();
+            if (selection == null) break;
+            showRecommendations(selection);
             waitForEnter();
         }
         System.out.println("\nGoodbye!");
@@ -42,20 +39,23 @@ public class Cli {
         System.out.println("╚══════════════════════════════════════╝");
     }
 
-    private String pickCondition() {
-        List<Map.Entry<String, String>> liveEntries = new ArrayList<>(weatherState.getAll().entrySet());
+    private Map.Entry<String, String> pickLocation() {
+        List<Map.Entry<String, String>> locations = new ArrayList<>(weatherState.getAll().entrySet());
 
-        System.out.println("\nSelect a weather condition:");
-        for (int i = 0; i < CONDITIONS.size(); i++) {
-            System.out.printf("  %d. %-14s→  %s%n", i + 1, CONDITIONS.get(i), MoodMapper.moodName(CONDITIONS.get(i)));
+        if (locations.isEmpty()) {
+            System.out.println("\nNo live weather data yet. Waiting for the weather feeder...");
+            System.out.println("  0. Exit");
+            System.out.print("\nOption: ");
+            String input = scanner.nextLine().trim();
+            if ("0".equals(input)) return null;
+            return pickLocation();
         }
-        if (!liveEntries.isEmpty()) {
-            System.out.println("\n  Live weather:");
-            for (int i = 0; i < liveEntries.size(); i++) {
-                Map.Entry<String, String> e = liveEntries.get(i);
-                System.out.printf("  %d. %-38s→  %s%n",
-                        CONDITIONS.size() + i + 1, e.getKey(), e.getValue());
-            }
+
+        System.out.println("\nSelect your location:");
+        for (int i = 0; i < locations.size(); i++) {
+            Map.Entry<String, String> e = locations.get(i);
+            String mood = MoodMapping.moodName(e.getValue());
+            System.out.printf("  %d. %-30s%-14s→  %s%n", i + 1, e.getKey(), e.getValue(), mood);
         }
         System.out.println("  0. Exit");
         System.out.print("\nOption: ");
@@ -64,25 +64,24 @@ public class Cli {
         try {
             int choice = Integer.parseInt(input);
             if (choice == 0) return null;
-            if (choice >= 1 && choice <= CONDITIONS.size()) return CONDITIONS.get(choice - 1);
-            int liveIndex = choice - CONDITIONS.size() - 1;
-            if (liveIndex >= 0 && liveIndex < liveEntries.size()) return liveEntries.get(liveIndex).getValue();
+            if (choice >= 1 && choice <= locations.size()) return locations.get(choice - 1);
         } catch (NumberFormatException ignored) {}
 
-        int max = CONDITIONS.size() + liveEntries.size();
-        System.out.println("Invalid option. Enter a number between 0 and " + max + ".");
-        return pickCondition();
+        System.out.println("Invalid option. Enter a number between 0 and " + locations.size() + ".");
+        return pickLocation();
     }
 
-    private void showRecommendations(String condition) {
-        String mood = MoodMapper.moodName(condition);
-        List<Track> tracks = recommender.recommend(condition);
+    private void showRecommendations(Map.Entry<String, String> selection) {
+        String location = selection.getKey();
+        String condition = selection.getValue();
+        String mood = MoodMapping.moodName(condition);
+        List<Track> tracks = datamart.findRecommendations(location);
 
-        System.out.println("\nWeather: " + condition + "  →  Mood: " + mood);
+        System.out.println("\n" + location + " — " + condition + "  →  Mood: " + mood);
         System.out.println("─".repeat(50));
 
         if (tracks.isEmpty()) {
-            System.out.println("No tracks found for this mood. Try again later.");
+            System.out.println("No recommendations yet for this location. Try again in a moment.");
             return;
         }
 
