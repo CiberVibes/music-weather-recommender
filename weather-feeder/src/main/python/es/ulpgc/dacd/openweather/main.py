@@ -1,10 +1,10 @@
 import sys
 import json
 import os
-from src.controller import Controller
-from src.feeder import OpenWeatherMapFeeder
-from src.serializer import DatabaseWeatherSerializer
-from src.publisher import ActiveMQWeatherPublisher
+from .controller.controller import Controller
+from .feeder.openweathermap_feeder import OpenWeatherMapFeeder
+from .controller.database_weather_serializer import DatabaseWeatherSerializer
+from .controller.activemq_weather_publisher import ActiveMQWeatherPublisher
 
 
 def load_locations():

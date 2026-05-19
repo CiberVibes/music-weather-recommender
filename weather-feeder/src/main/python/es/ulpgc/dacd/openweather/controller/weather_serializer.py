@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from src.model import Weather
+from ..model.weather import Weather
 
 
 class WeatherSerializer(ABC):

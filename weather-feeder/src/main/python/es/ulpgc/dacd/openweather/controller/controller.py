@@ -1,9 +1,9 @@
 import logging
 import time
 from threading import Thread
-from src.feeder import WeatherFeeder
-from src.serializer import WeatherSerializer
-from src.publisher import WeatherPublisher
+from ..feeder.weather_feeder import WeatherFeeder
+from .weather_serializer import WeatherSerializer
+from .weather_publisher import WeatherPublisher
 
 logger = logging.getLogger(__name__)
 

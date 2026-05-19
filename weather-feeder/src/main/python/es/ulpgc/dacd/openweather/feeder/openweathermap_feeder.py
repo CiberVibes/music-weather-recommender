@@ -2,8 +2,8 @@ import requests
 from datetime import datetime, timezone
 from typing import List, Dict, Any
 from urllib.parse import urlencode
-from src.feeder.weather_feeder import WeatherFeeder
-from src.model import Weather, Location
+from .weather_feeder import WeatherFeeder
+from ..model.weather import Weather, Location
 
 
 class OpenWeatherMapFeeder(WeatherFeeder):

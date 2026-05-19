@@ -1,6 +1,6 @@
 import sqlite3
-from src.serializer.weather_serializer import WeatherSerializer
-from src.model import Weather
+from .weather_serializer import WeatherSerializer
+from ..model.weather import Weather
 
 
 class DatabaseWeatherSerializer(WeatherSerializer):

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List
-from src.model import Weather
+from ..model.weather import Weather
 
 
 class WeatherFeeder(ABC):
