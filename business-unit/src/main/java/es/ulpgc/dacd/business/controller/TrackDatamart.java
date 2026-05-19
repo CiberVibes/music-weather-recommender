@@ -1,4 +1,4 @@
-package es.ulpgc.dacd.business.datamart;
+package es.ulpgc.dacd.business.controller;
 
 import es.ulpgc.dacd.business.model.Tag;
 import es.ulpgc.dacd.business.model.Track;
@@ -23,6 +23,7 @@ public class TrackDatamart {
         try (Connection connection = connect()) {
             createTracksTable(connection);
             createTrackTagsTable(connection);
+            createRecommendationsTable(connection);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -40,6 +41,22 @@ public class TrackDatamart {
                     ts TEXT NOT NULL,
                     ss TEXT NOT NULL,
                     UNIQUE(name, artist)
+                )""";
+        try (Statement stmt = connection.createStatement()) {
+            stmt.execute(sql);
+        }
+    }
+
+    private void createRecommendationsTable(Connection connection) throws SQLException {
+        String sql = """
+                CREATE TABLE IF NOT EXISTS recommendations (
+                    location TEXT NOT NULL,
+                    weather_main TEXT NOT NULL,
+                    rank INTEGER NOT NULL,
+                    track_name TEXT NOT NULL,
+                    track_artist TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    PRIMARY KEY (location, rank)
                 )""";
         try (Statement stmt = connection.createStatement()) {
             stmt.execute(sql);
@@ -115,6 +132,57 @@ public class TrackDatamart {
             }
             stmt.executeBatch();
         }
+    }
+
+    public void saveRecommendations(String location, String weatherMain, List<Track> tracks) {
+        try (Connection connection = connect()) {
+            try (PreparedStatement del = connection.prepareStatement(
+                    "DELETE FROM recommendations WHERE location = ?")) {
+                del.setString(1, location);
+                del.executeUpdate();
+            }
+            String sql = "INSERT INTO recommendations (location, weather_main, rank, track_name, track_artist, updated_at) VALUES (?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+                String now = java.time.Instant.now().toString();
+                for (int i = 0; i < tracks.size(); i++) {
+                    Track t = tracks.get(i);
+                    stmt.setString(1, location);
+                    stmt.setString(2, weatherMain);
+                    stmt.setInt(3, i + 1);
+                    stmt.setString(4, t.getName());
+                    stmt.setString(5, t.getArtist());
+                    stmt.setString(6, now);
+                    stmt.addBatch();
+                }
+                stmt.executeBatch();
+            }
+        } catch (SQLException e) {
+            logger.severe("Failed to save recommendations for " + location + ": " + e.getMessage());
+        }
+    }
+
+    public List<Track> findRecommendations(String location) {
+        String sql = """
+                SELECT track_name, track_artist, rank
+                FROM recommendations
+                WHERE location = ?
+                ORDER BY rank
+                """;
+        List<Track> result = new ArrayList<>();
+        try (Connection connection = connect();
+             PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, location);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                result.add(new Track(
+                        rs.getString("track_name"), rs.getString("track_artist"),
+                        null, null, rs.getInt("rank"), null, null, List.of()
+                ));
+            }
+        } catch (SQLException e) {
+            logger.severe("Failed to query recommendations for " + location + ": " + e.getMessage());
+        }
+        return result;
     }
 
     public List<Track> findByTag(String tagName) {

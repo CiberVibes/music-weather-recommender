@@ -1,8 +1,6 @@
 package es.ulpgc.dacd.business.controller;
 
 import es.ulpgc.dacd.business.handler.EventHandler;
-import es.ulpgc.dacd.business.store.EventStoreReader;
-import es.ulpgc.dacd.business.subscriber.JmsSubscriber;
 import org.apache.activemq.ActiveMQConnectionFactory;
 
 import javax.jms.*;
@@ -15,13 +13,16 @@ public class Controller {
     private final List<JmsSubscriber> subscribers;
     private final EventStoreReader eventStoreReader;
     private final Map<String, EventHandler> historicalHandlers;
+    private final Runnable postLoadAction;
 
     public Controller(String brokerUrl, List<JmsSubscriber> subscribers,
-                      EventStoreReader eventStoreReader, Map<String, EventHandler> historicalHandlers) {
+                      EventStoreReader eventStoreReader, Map<String, EventHandler> historicalHandlers,
+                      Runnable postLoadAction) {
         this.brokerUrl = brokerUrl;
         this.subscribers = subscribers;
         this.eventStoreReader = eventStoreReader;
         this.historicalHandlers = historicalHandlers;
+        this.postLoadAction = postLoadAction;
     }
 
     public void start() throws JMSException {
@@ -31,6 +32,8 @@ public class Controller {
 
     private void loadHistoricalEvents() {
         historicalHandlers.forEach(eventStoreReader::load);
+        historicalHandlers.values().forEach(h -> h.setActive(true));
+        postLoadAction.run();
     }
 
     private void startRealTimeSubscriptions() throws JMSException {
