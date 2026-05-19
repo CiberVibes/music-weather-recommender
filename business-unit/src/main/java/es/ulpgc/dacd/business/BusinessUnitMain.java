@@ -1,32 +1,37 @@
 package es.ulpgc.dacd.business;
 
 import es.ulpgc.dacd.business.controller.Controller;
-import es.ulpgc.dacd.business.datamart.TrackDatamart;
+import es.ulpgc.dacd.business.controller.TrackDatamart;
 import es.ulpgc.dacd.business.handler.EventHandler;
 import es.ulpgc.dacd.business.handler.TrackEventHandler;
 import es.ulpgc.dacd.business.handler.WeatherEventHandler;
 import es.ulpgc.dacd.business.handler.WeatherState;
-import es.ulpgc.dacd.business.recommendation.TrackRecommender;
-import es.ulpgc.dacd.business.store.EventStoreReader;
-import es.ulpgc.dacd.business.subscriber.JmsSubscriber;
+import es.ulpgc.dacd.business.controller.TrackRecommender;
+import es.ulpgc.dacd.business.controller.EventStoreReader;
+import es.ulpgc.dacd.business.controller.JmsSubscriber;
 import es.ulpgc.dacd.business.ui.Cli;
 
 import javax.jms.JMSException;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class BusinessUnitMain {
 
     public static void main(String[] args) throws JMSException {
+        configureLogging();
         String brokerUrl = args[0];
         String eventStorePath = args[1];
         String datamartPath = args[2];
 
         TrackDatamart datamart = new TrackDatamart(datamartPath);
-        TrackEventHandler trackHandler = new TrackEventHandler(datamart);
-
         WeatherState weatherState = new WeatherState();
-        WeatherEventHandler weatherHandler = new WeatherEventHandler(weatherState);
+        TrackRecommender recommender = new TrackRecommender(datamart);
+
+        TrackEventHandler trackHandler = new TrackEventHandler(datamart, recommender, weatherState);
+        WeatherEventHandler weatherHandler = new WeatherEventHandler(weatherState, recommender);
 
         List<JmsSubscriber> subscribers = List.of(
                 new JmsSubscriber("Track", trackHandler),
@@ -39,8 +44,18 @@ public class BusinessUnitMain {
         );
 
         EventStoreReader eventStoreReader = new EventStoreReader(eventStorePath);
-        new Controller(brokerUrl, subscribers, eventStoreReader, historicalHandlers).start();
+        Runnable postLoad = () -> recommender.recalculateAll(weatherState.getAll());
+        new Controller(brokerUrl, subscribers, eventStoreReader, historicalHandlers, postLoad).start();
 
-        new Cli(new TrackRecommender(datamart), weatherState).start();
+        new Cli(datamart, weatherState).start();
+    }
+
+    private static void configureLogging() {
+        Logger root = Logger.getLogger("");
+        for (var handler : root.getHandlers()) root.removeHandler(handler);
+        ConsoleHandler handler = new ConsoleHandler();
+        handler.setLevel(Level.WARNING);
+        root.addHandler(handler);
+        root.setLevel(Level.WARNING);
     }
 }

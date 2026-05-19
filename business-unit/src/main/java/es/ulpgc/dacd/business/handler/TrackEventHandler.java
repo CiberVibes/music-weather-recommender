@@ -1,10 +1,10 @@
 package es.ulpgc.dacd.business.handler;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import es.ulpgc.dacd.business.datamart.TrackDatamart;
+import es.ulpgc.dacd.business.controller.TrackDatamart;
+import es.ulpgc.dacd.business.controller.TrackRecommender;
 import es.ulpgc.dacd.business.model.Tag;
 import es.ulpgc.dacd.business.model.Track;
 
@@ -17,9 +17,19 @@ public class TrackEventHandler implements EventHandler {
     private static final Logger logger = Logger.getLogger(TrackEventHandler.class.getName());
 
     private final TrackDatamart datamart;
+    private final TrackRecommender recommender;
+    private final WeatherState weatherState;
+    private volatile boolean active = false;
 
-    public TrackEventHandler(TrackDatamart datamart) {
+    public TrackEventHandler(TrackDatamart datamart, TrackRecommender recommender, WeatherState weatherState) {
         this.datamart = datamart;
+        this.recommender = recommender;
+        this.weatherState = weatherState;
+    }
+
+    @Override
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     @Override
@@ -27,6 +37,9 @@ public class TrackEventHandler implements EventHandler {
         try {
             Track track = parse(json);
             datamart.save(track);
+            if (active && weatherState.hasData()) {
+                recommender.recalculateAll(weatherState.getAll());
+            }
         } catch (Exception e) {
             logger.severe("Failed to handle track event: " + e.getMessage());
         }

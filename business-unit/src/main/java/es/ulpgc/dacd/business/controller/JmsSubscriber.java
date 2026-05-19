@@ -1,4 +1,4 @@
-package es.ulpgc.dacd.business.subscriber;
+package es.ulpgc.dacd.business.controller;
 
 import es.ulpgc.dacd.business.handler.EventHandler;
 

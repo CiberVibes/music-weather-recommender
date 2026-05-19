@@ -1,6 +1,7 @@
 package es.ulpgc.dacd.business.handler;
 
-import es.ulpgc.dacd.business.datamart.TrackDatamart;
+import es.ulpgc.dacd.business.controller.TrackDatamart;
+import es.ulpgc.dacd.business.controller.TrackRecommender;
 import es.ulpgc.dacd.business.model.Track;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,7 +24,7 @@ class TrackEventHandlerTest {
     void setUp() throws IOException {
         tempDb = Files.createTempFile("test-datamart", ".db");
         datamart = new TrackDatamart(tempDb.toString());
-        handler = new TrackEventHandler(datamart);
+        handler = new TrackEventHandler(datamart, new TrackRecommender(datamart), new WeatherState());
     }
 
     @AfterEach

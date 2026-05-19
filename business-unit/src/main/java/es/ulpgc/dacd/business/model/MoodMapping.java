@@ -1,8 +1,8 @@
-package es.ulpgc.dacd.business.recommendation;
+package es.ulpgc.dacd.business.model;
 
 import java.util.List;
 
-public class MoodMapper {
+public class MoodMapping {
 
     public static String moodName(String weatherMain) {
         return switch (weatherMain.toLowerCase()) {
