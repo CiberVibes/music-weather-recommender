@@ -46,12 +46,12 @@ class Controller:
 
             count = 0
             for weather in weathers:
-                self.serializer.serialize(weather)
+                if self.serializer:
+                    self.serializer.serialize(weather)
                 if self.publisher:
                     self.publisher.publish(weather)
                 count += 1
 
-            logger.info(f"Saved {count} weather records to database")
             if self.publisher:
                 logger.info(f"Published {count} weather records to ActiveMQ")
         except Exception as e:
