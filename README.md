@@ -21,35 +21,35 @@ El usuario selecciona una condición meteorológica (o deja que el sistema detec
 
 El sistema sigue una arquitectura **Lambda/Kappa**: los datos fluyen desde los feeders hacia un event store persistente y simultáneamente a través de un broker de mensajería, permitiendo que la business-unit reconstruya su estado histórico al arrancar y reciba actualizaciones en tiempo real.
 
-```
-┌─────────────────┐        ┌──────────────────┐
-│  lastfm-feeder  │──JMS──▶│                  │──▶ eventstore/Track/
-│  (Java)         │        │ event-store-      │
-└─────────────────┘        │ builder (Java)    │
-                           │                  │──▶ eventstore/Weather/
-┌─────────────────┐        │                  │
-│ weather-feeder  │─STOMP─▶│                  │
-│  (Python)       │        └──────────────────┘
-└─────────────────┘
-        │                         ActiveMQ Broker
-        │                    ┌────────────────────┐
-        └────────STOMP───────▶   topic: Weather   │
-┌─────────────────┐          │   topic: Track     │
-│  lastfm-feeder  │────JMS──▶│                    │
-└─────────────────┘          └────────────────────┘
-                                        │ JMS
-                                        ▼
-                             ┌──────────────────────┐
-                             │   business-unit       │
-                             │   (Java)              │
-                             │                       │
-                             │  EventStoreReader     │
-                             │  ──────────────────   │
-                             │  TrackDatamart (SQLite)│
-                             │  WeatherState         │
-                             │  TrackRecommender     │
-                             │  CLI                  │
-                             └──────────────────────┘
+```mermaid
+graph TD
+    subgraph "Productores"
+        WF[weather-feeder\nPython]
+        LF[lastfm-feeder\nJava]
+    end
+
+    subgraph "Middleware EAI - ActiveMQ"
+        B[ActiveMQ Broker\nport 61616 / 61613]
+    end
+
+    subgraph "Batch Layer - Data Lake"
+        ESB[event-store-builder]
+        ES[(eventstore\nNDJSON)]
+    end
+
+    subgraph "Speed & Serving Layer"
+        BU[business-unit Java\nTrackDatamart + CLI]
+        BUP[business-unit Python\nWeatherDatamart + CLI]
+    end
+
+    WF -->|STOMP /topic/Weather| B
+    LF -->|JMS topic/Track| B
+    B -->|Durable Sub| ESB
+    ESB -->|Append| ES
+    B -->|JMS subscribe| BU
+    B -->|STOMP subscribe| BUP
+    ES -->|EventStoreReader| BU
+    ES -->|EventStoreReader| BUP
 ```
 
 ### Flujo de datos
@@ -65,16 +65,19 @@ El sistema sigue una arquitectura **Lambda/Kappa**: los datos fluyen desde los f
 
 ```
 music-weather-recommender/
-├── lastfm-feeder/          # Sprint 1 — feeder de canciones (Java)
-├── event-store-builder/    # Sprint 2 — almacén de eventos (Java)
-├── weather-feeder/         # Sprint 2 — feeder meteorológico (Python)
-├── business-unit/          # Sprint 3 — unidad de negocio y CLI (Java)
-├── eventstore/             # Datos generados: eventos en NDJSON
+├── lastfm-feeder/               # Sprint 1 — feeder de canciones (Java)
+├── event-store-builder/         # Sprint 2 — almacén de eventos (Java + Python)
+├── weather-feeder/              # Sprint 2 — feeder meteorológico (Python)
+│   └── src/main/python/es/ulpgc/dacd/openweather/
+├── business-unit/               # Sprint 3 — unidad de negocio y CLI
+│   ├── src/                     # Java: recomendador musical
+│   └── src/main/python/         # Python: datamart meteorológico
+├── eventstore/                  # Datos generados: eventos en NDJSON
 │   ├── Track/lastfm-feeder/
 │   └── Weather/OpenWeatherMap/
-├── pom.xml                 # POM raíz (multi-módulo Maven)
-├── run.sh                  # Script de arranque completo
-├── .env.example            # Plantilla de configuración
+├── pom.xml                      # POM raíz (multi-módulo Maven)
+├── run.sh                       # Script de arranque completo
+├── .env.example                 # Plantilla de configuración
 └── README.md
 ```
 
@@ -301,30 +304,212 @@ Weather: Clear  →  Mood: Happy (Q1)
 
 ---
 
-## Diagrama de clases — business-unit
+## Diagrama de clases
 
-```
-BusinessUnitMain
-    │
-    ├── Controller
-    │       ├── JmsSubscriber (Track)  ──▶ TrackEventHandler ──▶ TrackDatamart
-    │       ├── JmsSubscriber (Weather)──▶ WeatherEventHandler──▶ WeatherState
-    │       └── EventStoreReader (carga histórica)
-    │
-    └── Cli
-            ├── TrackRecommender ──▶ TrackDatamart
-            │       └── MoodMapper
-            └── WeatherState
+El diagrama se divide en tres bloques siguiendo la separación lógica de la arquitectura Lambda implementada: los **productores** generan y publican eventos, el **event store builder** los persiste de forma inmutable conformando el Data Lake, y la **business unit** los consume y transforma en información útil para el usuario.
+
+### Productores de datos
+Muestra los dos módulos encargados de la extracción y publicación hacia el broker. El `weather-feeder` (Python) consulta la API de OpenWeatherMap, mientras que el `lastfm-feeder` (Java) obtiene canciones de Last.fm. Ambos siguen el patrón feeder → publisher → controller.
+
+```mermaid
+classDiagram
+    class Location {
+        +str name
+        +float lat
+        +float lon
+        +str country
+    }
+    class Weather {
+        +Location location
+        +float temperature
+        +int humidity
+        +str weather_main
+        +datetime captured_at
+    }
+    class WeatherFeeder {
+        <<interface>>
+        +feed()
+    }
+    class OpenWeatherMapFeeder {
+        -str api_key
+        -list locations
+        +feed()
+    }
+    class WeatherPublisher {
+        <<interface>>
+        +publish(weather)
+        +connect()
+    }
+    class ActiveMQWeatherPublisher {
+        -str host
+        -int port
+        -str topic
+        +publish(weather)
+        +connect()
+    }
+    class WeatherFeederController {
+        -feeder
+        -publisher
+        +start()
+        +run()
+    }
+    class Tag {
+        +String name
+        +int count
+    }
+    class Track {
+        +String name
+        +String artist
+        +int rank
+        +List tags
+    }
+    class TrackEvent {
+        +String ts
+        +String ss
+        +String name
+        +String artist
+    }
+    class LastFmFeeder {
+        <<interface>>
+        +feed() List
+    }
+    class LastFmApiFeeder {
+        -String apiKey
+        +feed() List
+    }
+    class JmsTrackPublisher {
+        -Session session
+        +serialize(track)
+    }
+    class LastFmController {
+        -LastFmFeeder feeder
+        +start()
+    }
+
+    OpenWeatherMapFeeder --|> WeatherFeeder
+    ActiveMQWeatherPublisher --|> WeatherPublisher
+    LastFmApiFeeder --|> LastFmFeeder
+    WeatherFeederController --> WeatherFeeder
+    WeatherFeederController --> WeatherPublisher
+    OpenWeatherMapFeeder --> Weather
+    Weather --> Location
+    TrackEvent --> Tag
+    Track --> Tag
+    LastFmController --> LastFmFeeder
+    LastFmController --> JmsTrackPublisher
 ```
 
-## Diagrama de clases — lastfm-feeder
+### Event Store Builder
+Módulo responsable de la persistencia inmutable del sistema. Suscribe todos los topics de ActiveMQ y escribe cada evento en ficheros `.events` organizados por topic, fuente y fecha.
 
+```mermaid
+classDiagram
+    class FileEventStore {
+        -String basePath
+        +save(topic, json)
+    }
+    class ESBJmsSubscriber {
+        -String topicName
+        -FileEventStore store
+        +start(session)
+    }
+    class ESBController {
+        -String brokerUrl
+        +start()
+    }
+
+    ESBJmsSubscriber --> FileEventStore
+    ESBController --> ESBJmsSubscriber
 ```
-LastFmFeederMain
-    └── Controller
-            ├── LastFmApiFeeder (impl. LastFmFeeder)
-            └── JmsTrackPublisher (impl. TrackSerializer)
-                    └── GsonTrackEventSerializer (impl. TrackEventSerializer)
+
+### Business Unit
+Capa de consumo y presentación. Persiste los eventos en dos datamarts especializados — uno en Java para recomendaciones musicales y otro en Python para datos meteorológicos — y expone una CLI para el usuario final.
+
+```mermaid
+classDiagram
+    class EventHandler {
+        <<interface>>
+        +handle(json)
+    }
+    class TrackEventHandler {
+        -TrackDatamart datamart
+        +handle(json)
+    }
+    class WeatherEventHandler {
+        -WeatherState weatherState
+        +handle(json)
+    }
+    class WeatherState {
+        -Map latestByLocation
+        +update(location, weatherMain)
+        +getAll() Map
+    }
+    class TrackDatamart {
+        -String dbPath
+        +save(track)
+        +findByTag(tag) List
+    }
+    class MoodMapper {
+        +moodName(weatherMain) String
+        +tagsFor(weatherMain) List
+    }
+    class TrackRecommender {
+        -TrackDatamart datamart
+        +recommend(weatherMain) List
+    }
+    class BUJmsSubscriber {
+        -String topicName
+        -EventHandler handler
+        +start(session)
+    }
+    class JavaCli {
+        -TrackRecommender recommender
+        -WeatherState weatherState
+        +start()
+    }
+    class BUController {
+        -String brokerUrl
+        +start()
+    }
+    class WeatherSubscriber {
+        <<interface>>
+        +start()
+        +stop()
+    }
+    class ActiveMQWeatherSubscriber {
+        -str host
+        -str topic
+        +start()
+        +stop()
+    }
+    class WeatherDatamart {
+        -str db_path
+        +save(event)
+        +get_all_latest() list
+        +get_latest_by_location(name) dict
+    }
+    class PythonEventStoreReader {
+        -str event_store_path
+        +load(topic, handler)
+    }
+    class PythonCli {
+        -WeatherDatamart datamart
+        +start()
+    }
+
+    TrackEventHandler --|> EventHandler
+    WeatherEventHandler --|> EventHandler
+    ActiveMQWeatherSubscriber --|> WeatherSubscriber
+    TrackEventHandler --> TrackDatamart
+    WeatherEventHandler --> WeatherState
+    TrackRecommender --> TrackDatamart
+    TrackRecommender --> MoodMapper
+    BUJmsSubscriber --> EventHandler
+    JavaCli --> TrackRecommender
+    JavaCli --> WeatherState
+    BUController --> BUJmsSubscriber
+    ActiveMQWeatherSubscriber --> WeatherDatamart
+    PythonCli --> WeatherDatamart
 ```
 
 ---
