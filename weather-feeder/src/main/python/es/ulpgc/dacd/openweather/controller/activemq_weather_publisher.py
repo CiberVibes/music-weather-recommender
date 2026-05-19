@@ -2,8 +2,8 @@ import json
 import logging
 import time
 import stomp
-from src.publisher import WeatherPublisher
-from src.model import Weather
+from .weather_publisher import WeatherPublisher
+from ..model.weather import Weather
 
 logger = logging.getLogger(__name__)
 
