@@ -1,4 +1,4 @@
-package es.ulpgc.dacd.lastfm.feeder;
+package es.ulpgc.dacd.lastfm.controller;
 
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
