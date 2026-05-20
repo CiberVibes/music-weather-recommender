@@ -4,6 +4,7 @@ import es.ulpgc.dacd.business.model.Tag;
 import es.ulpgc.dacd.business.model.Track;
 
 import java.sql.*;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -136,28 +137,35 @@ public class TrackDatamart {
 
     public void saveRecommendations(String location, String weatherMain, List<Track> tracks) {
         try (Connection connection = connect()) {
-            try (PreparedStatement del = connection.prepareStatement(
-                    "DELETE FROM recommendations WHERE location = ?")) {
-                del.setString(1, location);
-                del.executeUpdate();
-            }
-            String sql = "INSERT INTO recommendations (location, weather_main, rank, track_name, track_artist, updated_at) VALUES (?, ?, ?, ?, ?, ?)";
-            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-                String now = java.time.Instant.now().toString();
-                for (int i = 0; i < tracks.size(); i++) {
-                    Track t = tracks.get(i);
-                    stmt.setString(1, location);
-                    stmt.setString(2, weatherMain);
-                    stmt.setInt(3, i + 1);
-                    stmt.setString(4, t.getName());
-                    stmt.setString(5, t.getArtist());
-                    stmt.setString(6, now);
-                    stmt.addBatch();
-                }
-                stmt.executeBatch();
-            }
+            deleteRecommendationsFor(connection, location);
+            insertRecommendations(connection, location, weatherMain, tracks);
         } catch (SQLException e) {
             logger.severe("Failed to save recommendations for " + location + ": " + e.getMessage());
+        }
+    }
+
+    private void deleteRecommendationsFor(Connection connection, String location) throws SQLException {
+        try (PreparedStatement stmt = connection.prepareStatement("DELETE FROM recommendations WHERE location = ?")) {
+            stmt.setString(1, location);
+            stmt.executeUpdate();
+        }
+    }
+
+    private void insertRecommendations(Connection connection, String location, String weatherMain, List<Track> tracks) throws SQLException {
+        String sql = "INSERT INTO recommendations (location, weather_main, rank, track_name, track_artist, updated_at) VALUES (?, ?, ?, ?, ?, ?)";
+        String now = Instant.now().toString();
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            for (int i = 0; i < tracks.size(); i++) {
+                Track track = tracks.get(i);
+                stmt.setString(1, location);
+                stmt.setString(2, weatherMain);
+                stmt.setInt(3, i + 1);
+                stmt.setString(4, track.getName());
+                stmt.setString(5, track.getArtist());
+                stmt.setString(6, now);
+                stmt.addBatch();
+            }
+            stmt.executeBatch();
         }
     }
 
