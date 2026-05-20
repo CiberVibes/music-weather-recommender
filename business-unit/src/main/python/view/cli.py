@@ -1,4 +1,4 @@
-from datamart import WeatherDatamart
+from controller import WeatherDatamart
 
 SEPARATOR_WIDTH = 60
 

@@ -1,10 +1,10 @@
-package es.ulpgc.dacd.business.ui;
+package es.ulpgc.dacd.business.view;
 
-import es.ulpgc.dacd.business.handler.WeatherState;
-import es.ulpgc.dacd.business.model.Track;
-import es.ulpgc.dacd.business.model.MoodMapping;
+import es.ulpgc.dacd.business.controller.SpotifyExporter;
 import es.ulpgc.dacd.business.controller.TrackDatamart;
-import es.ulpgc.dacd.business.spotify.SpotifyExporter;
+import es.ulpgc.dacd.business.controller.WeatherState;
+import es.ulpgc.dacd.business.model.MoodMapping;
+import es.ulpgc.dacd.business.model.Track;
 
 import java.util.ArrayList;
 import java.util.List;

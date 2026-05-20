@@ -1,4 +1,4 @@
-package es.ulpgc.dacd.business.spotify;
+package es.ulpgc.dacd.business.controller;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -152,5 +152,4 @@ public class SpotifyExporter {
         String responseBody = http.send(request, HttpResponse.BodyHandlers.ofString()).body();
         return JsonParser.parseString(responseBody).getAsJsonObject();
     }
-
 }

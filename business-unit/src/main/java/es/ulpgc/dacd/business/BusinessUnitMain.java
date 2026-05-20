@@ -1,16 +1,16 @@
 package es.ulpgc.dacd.business;
 
 import es.ulpgc.dacd.business.controller.Controller;
-import es.ulpgc.dacd.business.controller.TrackDatamart;
-import es.ulpgc.dacd.business.handler.EventHandler;
-import es.ulpgc.dacd.business.handler.TrackEventHandler;
-import es.ulpgc.dacd.business.handler.WeatherEventHandler;
-import es.ulpgc.dacd.business.handler.WeatherState;
-import es.ulpgc.dacd.business.controller.TrackRecommender;
+import es.ulpgc.dacd.business.controller.EventHandler;
 import es.ulpgc.dacd.business.controller.EventStoreReader;
 import es.ulpgc.dacd.business.controller.JmsSubscriber;
-import es.ulpgc.dacd.business.spotify.SpotifyExporter;
-import es.ulpgc.dacd.business.web.WebServer;
+import es.ulpgc.dacd.business.controller.SpotifyExporter;
+import es.ulpgc.dacd.business.controller.TrackDatamart;
+import es.ulpgc.dacd.business.controller.TrackEventHandler;
+import es.ulpgc.dacd.business.controller.TrackRecommender;
+import es.ulpgc.dacd.business.controller.WeatherEventHandler;
+import es.ulpgc.dacd.business.controller.WeatherState;
+import es.ulpgc.dacd.business.view.WebServer;
 
 import javax.jms.JMSException;
 import java.util.List;

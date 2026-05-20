@@ -1,4 +1,4 @@
-package es.ulpgc.dacd.business.handler;
+package es.ulpgc.dacd.business.controller;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;

@@ -1,8 +1,7 @@
-package es.ulpgc.dacd.business.handler;
+package es.ulpgc.dacd.business.controller;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import es.ulpgc.dacd.business.controller.TrackRecommender;
 
 import java.util.logging.Logger;
 

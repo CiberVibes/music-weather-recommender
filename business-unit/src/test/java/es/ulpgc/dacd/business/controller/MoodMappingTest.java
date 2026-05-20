@@ -1,4 +1,4 @@
-package es.ulpgc.dacd.business.recommendation;
+package es.ulpgc.dacd.business.controller;
 
 import es.ulpgc.dacd.business.model.MoodMapping;
 import org.junit.jupiter.api.Test;

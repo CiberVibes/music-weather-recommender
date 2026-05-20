@@ -1,12 +1,12 @@
-package es.ulpgc.dacd.business.web;
+package es.ulpgc.dacd.business.view;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import es.ulpgc.dacd.business.controller.SpotifyExporter;
 import es.ulpgc.dacd.business.controller.TrackDatamart;
-import es.ulpgc.dacd.business.handler.WeatherState;
+import es.ulpgc.dacd.business.controller.WeatherState;
 import es.ulpgc.dacd.business.model.MoodMapping;
 import es.ulpgc.dacd.business.model.Track;
-import es.ulpgc.dacd.business.spotify.SpotifyExporter;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 

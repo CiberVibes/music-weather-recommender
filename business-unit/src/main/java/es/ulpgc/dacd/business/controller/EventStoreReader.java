@@ -1,7 +1,5 @@
 package es.ulpgc.dacd.business.controller;
 
-import es.ulpgc.dacd.business.handler.EventHandler;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;

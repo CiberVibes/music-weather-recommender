@@ -1,4 +1,4 @@
-package es.ulpgc.dacd.business.handler;
+package es.ulpgc.dacd.business.controller;
 
 public interface EventHandler {
     void handle(String json);

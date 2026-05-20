@@ -1,10 +1,8 @@
 import json
 import logging
 import sys
-from datamart import WeatherDatamart
-from store import EventStoreReader
-from subscriber import ActiveMQWeatherSubscriber
-from ui import Cli
+from controller import WeatherDatamart, EventStoreReader, ActiveMQWeatherSubscriber
+from view import Cli
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(name)s - %(message)s')
 logger = logging.getLogger(__name__)

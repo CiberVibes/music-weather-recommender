@@ -1,6 +1,5 @@
 package es.ulpgc.dacd.business.controller;
 
-import es.ulpgc.dacd.business.handler.EventHandler;
 import org.apache.activemq.ActiveMQConnectionFactory;
 
 import javax.jms.*;

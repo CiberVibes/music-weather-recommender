@@ -1,7 +1,5 @@
 package es.ulpgc.dacd.business.controller;
 
-import es.ulpgc.dacd.business.handler.EventHandler;
-
 import javax.jms.*;
 import java.util.logging.Logger;
 

@@ -1,10 +1,8 @@
-package es.ulpgc.dacd.business.handler;
+package es.ulpgc.dacd.business.controller;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import es.ulpgc.dacd.business.controller.TrackDatamart;
-import es.ulpgc.dacd.business.controller.TrackRecommender;
 import es.ulpgc.dacd.business.model.Tag;
 import es.ulpgc.dacd.business.model.Track;
 
