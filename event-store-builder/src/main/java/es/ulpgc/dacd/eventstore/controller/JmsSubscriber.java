@@ -1,8 +1,7 @@
-package es.ulpgc.dacd.eventstore.subscriber;
-
-import es.ulpgc.dacd.eventstore.store.FileEventStore;
+package es.ulpgc.dacd.eventstore.controller;
 
 import javax.jms.*;
+import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
 
 public class JmsSubscriber {
@@ -33,13 +32,11 @@ public class JmsSubscriber {
     }
 
     private String extractText(Message message) throws JMSException {
-        if (message instanceof TextMessage textMessage) {
-            return textMessage.getText();
-        }
+        if (message instanceof TextMessage textMessage) return textMessage.getText();
         if (message instanceof BytesMessage bytesMessage) {
             byte[] bytes = new byte[(int) bytesMessage.getBodyLength()];
             bytesMessage.readBytes(bytes);
-            return new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+            return new String(bytes, StandardCharsets.UTF_8);
         }
         logger.warning("Unexpected message type: " + message.getClass().getName());
         return null;

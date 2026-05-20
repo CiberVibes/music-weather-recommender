@@ -1,6 +1,5 @@
 package es.ulpgc.dacd.eventstore.controller;
 
-import es.ulpgc.dacd.eventstore.subscriber.JmsSubscriber;
 import org.apache.activemq.ActiveMQConnectionFactory;
 
 import javax.jms.*;
