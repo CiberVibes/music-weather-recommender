@@ -7,6 +7,6 @@ target/
 *.iml
 .DS_Store
 .env
-eventstore/
+/eventstore/
 datamart.db
 weather.db
