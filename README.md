@@ -39,7 +39,7 @@ graph TD
 
     subgraph "Speed & Serving Layer"
         BU[business-unit Java\nJavalin :8080]
-        BUP[business-unit Python\nWeatherDatamart + CLI]
+        BUP[business-unit Python\nWeatherDatamart]
     end
 
     subgraph "Servicios externos"
@@ -92,9 +92,8 @@ music-weather-recommender/
 │   │   ├── model/               # MoodMapping, Tag, Track
 │   │   ├── controller/          # TrackDatamart, TrackRecommender, SpotifyExporter, …
 │   │   └── view/                # WebServer (Javalin :8080)
-│   ├── src/main/python/         # Python: datamart meteorológico + CLI
-│   │   ├── controller/          # WeatherDatamart, EventStoreReader, subscriber
-│   │   └── view/                # Cli
+│   ├── src/main/python/         # Python: datamart meteorológico (suscriptor en background)
+│   │   └── controller/          # WeatherDatamart, EventStoreReader, subscriber
 │   └── src/main/resources/web/  # index.html, app.js (Spotify Web Playback SDK)
 ├── eventstore/                  # Datos generados: eventos en NDJSON
 │   ├── Track/lastfm-feeder/
@@ -108,7 +107,7 @@ music-weather-recommender/
 Cada módulo sigue la separación **model / controller / view** (view solo en business-unit):
 - `model`: entidades de dominio sin dependencias externas.
 - `controller`: lógica de negocio, acceso a datos, suscripciones al broker.
-- `view`: interfaz con el usuario (web o CLI).
+- `view`: interfaz web del usuario (Javalin + Spotify Web Playback SDK). Solo existe en business-unit Java.
 
 ---
 
@@ -305,9 +304,12 @@ java --enable-native-access=ALL-UNNAMED \
 Si no se pasan las propiedades de Spotify, el sistema arranca sin reproducción (modo solo recomendaciones).
 
 **6. business-unit Python (datamart meteorológico)**
+
+Carga eventos históricos del event store, luego queda en background escuchando eventos de clima vía STOMP:
+
 ```bash
 cd business-unit/src/main/python
-python3 main.py ../../../../../../weather.db ../../../../../../eventstore
+python3 main.py <WEATHER_DB_PATH> <EVENTSTORE_PATH>
 ```
 
 ---
@@ -557,10 +559,6 @@ classDiagram
         -str event_store_path
         +load(topic, handler)
     }
-    class PythonCli {
-        -WeatherDatamart datamart
-        +start()
-    }
 
     TrackEventHandler --|> EventHandler
     WeatherEventHandler --|> EventHandler
@@ -575,7 +573,7 @@ classDiagram
     WebServer --> SpotifyExporter
     BUController --> BUJmsSubscriber
     ActiveMQWeatherSubscriber --> WeatherDatamart
-    PythonCli --> WeatherDatamart
+    PythonEventStoreReader --> WeatherDatamart
 ```
 
 ---

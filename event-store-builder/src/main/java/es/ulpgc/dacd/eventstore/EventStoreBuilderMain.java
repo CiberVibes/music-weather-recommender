@@ -1,8 +1,8 @@
 package es.ulpgc.dacd.eventstore;
 
-import es.ulpgc.dacd.eventstore.control.Controller;
-import es.ulpgc.dacd.eventstore.control.FileEventStore;
-import es.ulpgc.dacd.eventstore.control.JmsSubscriber;
+import es.ulpgc.dacd.eventstore.controller.Controller;
+import es.ulpgc.dacd.eventstore.controller.FileEventStore;
+import es.ulpgc.dacd.eventstore.controller.JmsSubscriber;
 
 import javax.jms.JMSException;
 import java.util.List;

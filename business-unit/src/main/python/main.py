@@ -2,7 +2,6 @@ import json
 import logging
 import sys
 from controller import WeatherDatamart, EventStoreReader, ActiveMQWeatherSubscriber
-from view import Cli
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(name)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -15,7 +14,6 @@ def load_event(line: str, datamart: WeatherDatamart) -> None:
 def main():
     if len(sys.argv) < 3:
         print("Usage: python main.py <db_path> <event_store_path>")
-        print("Example: python main.py weather_datamart.db eventstore")
         sys.exit(1)
 
     db_path = sys.argv[1]
@@ -32,7 +30,10 @@ def main():
     subscriber.start()
 
     try:
-        Cli(datamart).start()
+        while True:
+            pass
+    except KeyboardInterrupt:
+        pass
     finally:
         subscriber.stop()
         logger.info("Subscriber stopped.")

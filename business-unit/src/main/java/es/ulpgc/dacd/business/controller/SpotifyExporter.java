@@ -65,14 +65,25 @@ public class SpotifyExporter {
                 .uri(URI.create(API_URL + "/search?q=" + q + "&type=track&limit=1"))
                 .header("Authorization", "Bearer " + getAccessToken())
                 .GET().build();
+        HttpResponse<String> response = sendWithRateLimitRetry(request);
+        return extractTrackUri(response);
+    }
+
+    public int playTrack(String deviceId, String uri) throws Exception {
+        transferPlayback(deviceId);
+        Thread.sleep(300);
+        return sendPlayRequest(deviceId, uri);
+    }
+
+    private HttpResponse<String> sendWithRateLimitRetry(HttpRequest request) throws Exception {
         HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() == 429) {
-            int retryAfter = response.headers().firstValueAsLong("Retry-After").orElse(5L) > 0
-                    ? (int) response.headers().firstValueAsLong("Retry-After").getAsLong()
-                    : 5;
-            Thread.sleep(retryAfter * 1000L);
-            response = http.send(request, HttpResponse.BodyHandlers.ofString());
-        }
+        if (response.statusCode() != 429) return response;
+        long retryAfter = response.headers().firstValueAsLong("Retry-After").orElse(5L);
+        Thread.sleep(retryAfter * 1000L);
+        return http.send(request, HttpResponse.BodyHandlers.ofString());
+    }
+
+    private String extractTrackUri(HttpResponse<String> response) throws Exception {
         String body = response.body();
         JsonObject root;
         try {
@@ -80,40 +91,39 @@ public class SpotifyExporter {
         } catch (Exception e) {
             throw new Exception("Spotify HTTP " + response.statusCode() + ": " + body.substring(0, Math.min(300, body.length())));
         }
-        if (root.has("error")) return null;
-        if (!root.has("tracks")) return null;
+        if (root.has("error") || !root.has("tracks")) return null;
         JsonArray items = root.getAsJsonObject("tracks").getAsJsonArray("items");
         if (items == null || items.isEmpty()) return null;
         return items.get(0).getAsJsonObject().get("uri").getAsString();
     }
 
-    public int playTrack(String deviceId, String uri) throws Exception {
-        JsonObject transferPayload = new JsonObject();
+    private void transferPlayback(String deviceId) throws Exception {
         JsonArray deviceIds = new JsonArray();
         deviceIds.add(deviceId);
-        transferPayload.add("device_ids", deviceIds);
-        transferPayload.addProperty("play", false);
-        HttpRequest transferReq = HttpRequest.newBuilder()
+        JsonObject payload = new JsonObject();
+        payload.add("device_ids", deviceIds);
+        payload.addProperty("play", false);
+        HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(API_URL + "/me/player"))
                 .header("Authorization", "Bearer " + getAccessToken())
                 .header("Content-Type", "application/json")
-                .PUT(HttpRequest.BodyPublishers.ofString(transferPayload.toString()))
+                .PUT(HttpRequest.BodyPublishers.ofString(payload.toString()))
                 .build();
-        http.send(transferReq, HttpResponse.BodyHandlers.ofString());
+        http.send(request, HttpResponse.BodyHandlers.ofString());
+    }
 
-        Thread.sleep(300);
-
-        JsonObject playPayload = new JsonObject();
+    private int sendPlayRequest(String deviceId, String uri) throws Exception {
         JsonArray uris = new JsonArray();
         uris.add(uri);
-        playPayload.add("uris", uris);
-        HttpRequest playReq = HttpRequest.newBuilder()
+        JsonObject payload = new JsonObject();
+        payload.add("uris", uris);
+        HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(API_URL + "/me/player/play?device_id=" + deviceId))
                 .header("Authorization", "Bearer " + getAccessToken())
                 .header("Content-Type", "application/json")
-                .PUT(HttpRequest.BodyPublishers.ofString(playPayload.toString()))
+                .PUT(HttpRequest.BodyPublishers.ofString(payload.toString()))
                 .build();
-        return http.send(playReq, HttpResponse.BodyHandlers.ofString()).statusCode();
+        return http.send(request, HttpResponse.BodyHandlers.ofString()).statusCode();
     }
 
     public String getAccessToken() throws Exception {
