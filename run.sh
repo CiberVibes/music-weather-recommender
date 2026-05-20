@@ -40,7 +40,8 @@ java -jar "$SCRIPT_DIR/event-store-builder/target/event-store-builder-1.0-SNAPSH
 ESB_PID=$!
 
 echo "Starting lastfm-feeder..."
-java -jar "$SCRIPT_DIR/lastfm-feeder/target/lastfm-feeder-1.0-SNAPSHOT.jar" \
+java --enable-native-access=ALL-UNNAMED \
+  -jar "$SCRIPT_DIR/lastfm-feeder/target/lastfm-feeder-1.0-SNAPSHOT.jar" \
   "$LASTFM_API_KEY" "$LASTFM_COUNTRY" "$BROKER_URL" &
 FEEDER_PID=$!
 
@@ -56,7 +57,11 @@ fi
 trap "echo 'Stopping...'; kill $ESB_PID $FEEDER_PID ${WEATHER_PID:-} 2>/dev/null; exit 0" INT TERM
 
 echo "Starting business-unit..."
-java -jar "$SCRIPT_DIR/business-unit/target/business-unit-1.0-SNAPSHOT.jar" \
+java \
+  --enable-native-access=ALL-UNNAMED \
+  ${SPOTIFY_CLIENT_ID:+-Dspotify.client.id="$SPOTIFY_CLIENT_ID"} \
+  ${SPOTIFY_CLIENT_SECRET:+-Dspotify.client.secret="$SPOTIFY_CLIENT_SECRET"} \
+  -jar "$SCRIPT_DIR/business-unit/target/business-unit-1.0-SNAPSHOT.jar" \
   "$BROKER_URL" "$EVENTSTORE_PATH" "$DATAMART_PATH"
 
 kill $ESB_PID $FEEDER_PID ${WEATHER_PID:-} 2>/dev/null
