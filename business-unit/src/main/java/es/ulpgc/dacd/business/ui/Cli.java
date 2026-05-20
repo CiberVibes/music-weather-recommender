@@ -4,6 +4,7 @@ import es.ulpgc.dacd.business.handler.WeatherState;
 import es.ulpgc.dacd.business.model.Track;
 import es.ulpgc.dacd.business.model.MoodMapping;
 import es.ulpgc.dacd.business.controller.TrackDatamart;
+import es.ulpgc.dacd.business.spotify.SpotifyExporter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,11 +15,13 @@ public class Cli {
 
     private final TrackDatamart datamart;
     private final WeatherState weatherState;
+    private final SpotifyExporter spotify;
     private final Scanner scanner;
 
-    public Cli(TrackDatamart datamart, WeatherState weatherState) {
+    public Cli(TrackDatamart datamart, WeatherState weatherState, SpotifyExporter spotify) {
         this.datamart = datamart;
         this.weatherState = weatherState;
+        this.spotify = spotify;
         this.scanner = new Scanner(System.in);
     }
 
@@ -27,8 +30,8 @@ public class Cli {
         while (true) {
             Map.Entry<String, String> selection = pickLocation();
             if (selection == null) break;
-            showRecommendations(selection);
-            waitForEnter();
+            List<Track> tracks = showRecommendations(selection);
+            handleExportPrompt(tracks, selection);
         }
         System.out.println("\nGoodbye!");
     }
@@ -71,7 +74,7 @@ public class Cli {
         return pickLocation();
     }
 
-    private void showRecommendations(Map.Entry<String, String> selection) {
+    private List<Track> showRecommendations(Map.Entry<String, String> selection) {
         String location = selection.getKey();
         String condition = selection.getValue();
         String mood = MoodMapping.moodName(condition);
@@ -82,7 +85,7 @@ public class Cli {
 
         if (tracks.isEmpty()) {
             System.out.println("No recommendations yet for this location. Try again in a moment.");
-            return;
+            return tracks;
         }
 
         int shown = Math.min(10, tracks.size());
@@ -91,9 +94,10 @@ public class Cli {
             System.out.printf("  %2d. %s — %s%n", i + 1, t.getName(), t.getArtist());
         }
         System.out.printf("%n  Showing %d track(s).%n", shown);
+        return tracks;
     }
 
-    private void waitForEnter() {
+    private void handleExportPrompt(List<Track> tracks, Map.Entry<String, String> selection) {
         System.out.print("\nPress Enter to go back...");
         scanner.nextLine();
     }

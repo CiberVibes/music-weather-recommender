@@ -9,7 +9,8 @@ import es.ulpgc.dacd.business.handler.WeatherState;
 import es.ulpgc.dacd.business.controller.TrackRecommender;
 import es.ulpgc.dacd.business.controller.EventStoreReader;
 import es.ulpgc.dacd.business.controller.JmsSubscriber;
-import es.ulpgc.dacd.business.ui.Cli;
+import es.ulpgc.dacd.business.spotify.SpotifyExporter;
+import es.ulpgc.dacd.business.web.WebServer;
 
 import javax.jms.JMSException;
 import java.util.List;
@@ -47,7 +48,17 @@ public class BusinessUnitMain {
         Runnable postLoad = () -> recommender.recalculateAll(weatherState.getAll());
         new Controller(brokerUrl, subscribers, eventStoreReader, historicalHandlers, postLoad).start();
 
-        new Cli(datamart, weatherState).start();
+        SpotifyExporter spotify = buildSpotifyExporter();
+        new WebServer(datamart, weatherState, spotify).start();
+    }
+
+    private static SpotifyExporter buildSpotifyExporter() {
+        String clientId = System.getProperty("spotify.client.id");
+        String clientSecret = System.getProperty("spotify.client.secret");
+        if (clientId != null && !clientId.isBlank() && clientSecret != null && !clientSecret.isBlank()) {
+            return new SpotifyExporter(clientId, clientSecret);
+        }
+        return null;
     }
 
     private static void configureLogging() {
