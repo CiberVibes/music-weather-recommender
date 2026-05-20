@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime
-from src.model import Weather, Location
+from es.ulpgc.dacd.openweather.model.weather import Weather, Location
 
 
 class TestLocation(unittest.TestCase):

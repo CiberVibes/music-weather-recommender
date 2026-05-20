@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Weather Recommender v3</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://sdk.scdn.co/spotify-player.js"></script>
+</head>
+<body>
+
+<header>
+    <div class="header-title">
+        <span class="logo">&#9835;</span>
+        <h1>Music Weather Recommender</h1>
+    </div>
+    <div class="header-auth">
+        <button id="connect-btn" onclick="connectSpotify()">Connect Spotify</button>
+        <span id="user-info" class="user-info hidden">&#10003; Spotify connected</span>
+    </div>
+</header>
+
+<div class="layout">
+
+    <aside class="sidebar">
+        <h2>Live Weather</h2>
+        <div id="locations-list">
+            <p class="hint">Loading weather data...</p>
+        </div>
+    </aside>
+
+    <main class="main-panel">
+        <div class="recommendations-header">
+            <h2 id="recs-title">Select a location to see recommendations</h2>
+        </div>
+        <div id="tracks-list"></div>
+    </main>
+
+</div>
+
+<footer id="player-bar" class="player-bar hidden">
+    <div class="now-playing">
+        <img id="album-art" src="" alt="" class="album-art hidden">
+        <div class="now-playing-info">
+            <div id="now-track" class="now-track">-</div>
+            <div id="now-artist" class="now-artist">-</div>
+        </div>
+    </div>
+    <div class="player-controls">
+        <button onclick="prevTrack()" title="Previous">&#9664;&#9664;</button>
+        <button id="play-pause-btn" onclick="togglePlay()" class="play-btn" title="Play/Pause">&#9654;</button>
+        <button onclick="nextTrack()" title="Next">&#9654;&#9654;</button>
+    </div>
+    <div class="volume-control">
+        <span>&#128264;</span>
+        <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.5"
+               oninput="setVolume(this.value)">
+    </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

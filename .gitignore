@@ -9,3 +9,4 @@ target/
 .env
 eventstore/
 datamart.db
+weather.db

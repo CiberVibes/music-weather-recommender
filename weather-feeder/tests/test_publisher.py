@@ -2,8 +2,8 @@ import json
 import unittest
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
-from src.model import Weather, Location
-from src.publisher import ActiveMQWeatherPublisher
+from es.ulpgc.dacd.openweather.model.weather import Weather, Location
+from es.ulpgc.dacd.openweather.controller.activemq_weather_publisher import ActiveMQWeatherPublisher
 
 
 def make_weather():
@@ -56,7 +56,7 @@ class TestActiveMQWeatherPublisher(unittest.TestCase):
         result = publisher._to_dict(weather)
         self.assertNotIn('captured_at', result)
 
-    @patch('src.publisher.activemq_weather_publisher.stomp.Connection')
+    @patch('es.ulpgc.dacd.openweather.controller.activemq_weather_publisher.stomp.Connection')
     def test_publish_sends_valid_json(self, mock_connection_class):
         mock_conn = MagicMock()
         mock_conn.is_connected.return_value = True
@@ -74,7 +74,7 @@ class TestActiveMQWeatherPublisher(unittest.TestCase):
         self.assertIn('ts', parsed)
         self.assertIn('ss', parsed)
 
-    @patch('src.publisher.activemq_weather_publisher.stomp.Connection')
+    @patch('es.ulpgc.dacd.openweather.controller.activemq_weather_publisher.stomp.Connection')
     def test_publish_retries_on_failure(self, mock_connection_class):
         mock_conn = MagicMock()
         mock_conn.is_connected.return_value = True
@@ -84,12 +84,12 @@ class TestActiveMQWeatherPublisher(unittest.TestCase):
         publisher = ActiveMQWeatherPublisher()
         publisher.conn = mock_conn
 
-        with patch('src.publisher.activemq_weather_publisher.time.sleep'):
+        with patch('es.ulpgc.dacd.openweather.controller.activemq_weather_publisher.time.sleep'):
             publisher.publish(make_weather())
 
         self.assertEqual(mock_conn.send.call_count, 3)
 
-    @patch('src.publisher.activemq_weather_publisher.stomp.Connection')
+    @patch('es.ulpgc.dacd.openweather.controller.activemq_weather_publisher.stomp.Connection')
     def test_publish_reconnects_if_disconnected(self, mock_connection_class):
         mock_conn = MagicMock()
         mock_conn.is_connected.return_value = False

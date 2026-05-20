@@ -3,8 +3,8 @@ import os
 import sqlite3
 import time
 from datetime import datetime
-from src.serializer import DatabaseWeatherSerializer
-from src.model import Weather, Location
+from es.ulpgc.dacd.openweather.controller.database_weather_serializer import DatabaseWeatherSerializer
+from es.ulpgc.dacd.openweather.model.weather import Weather, Location
 
 
 class TestDatabaseWeatherSerializer(unittest.TestCase):
