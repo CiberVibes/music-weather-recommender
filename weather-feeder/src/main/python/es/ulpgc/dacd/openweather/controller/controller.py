@@ -1,7 +1,7 @@
 import logging
 import time
 from threading import Thread
-from ..feeder.weather_feeder import WeatherFeeder
+from .weather_feeder import WeatherFeeder
 from .weather_serializer import WeatherSerializer
 from .weather_publisher import WeatherPublisher
 

@@ -2,7 +2,7 @@ import sys
 import json
 import os
 from .controller.controller import Controller
-from .feeder.openweathermap_feeder import OpenWeatherMapFeeder
+from .controller.openweathermap_feeder import OpenWeatherMapFeeder
 from .controller.activemq_weather_publisher import ActiveMQWeatherPublisher
 
 
